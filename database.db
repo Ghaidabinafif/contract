@@ -1,0 +1,104 @@
+    # إعداد الخط
+    pdf.add_font('Amiri', '', 'static/Amiri-Regular.ttf', uni=True)
+    pdf.set_font('Amiri', '', 20)  # زيادة حجم الخط قليلاً
+
+    # تكبير الإحداثيات لكل حقل
+    # حقل "التاريخ"
+    pdf.set_xy(650, 125)  # left, top
+    pdf.cell(120, 30, data.get('date', ''), border=0, align='C')
+
+    # حقل "رقم العقد"
+    pdf.set_xy(100, 125)
+    pdf.cell(100, 30, data.get('contract-number', ''), border=0, align='C')
+
+    # حقل "الجنسية"
+    pdf.set_xy(50, 180)
+    pdf.cell(300, 30, data.get('nationality', ''), border=0, align='C')
+
+    # حقل "رقم الإثبات"
+    pdf.set_xy(50, 215)
+    pdf.cell(300, 30, data.get('id-number', ''), border=0, align='C')
+
+    # حقل "العمل"
+    pdf.set_xy(50, 250)
+    pdf.cell(300, 30, data.get('job', ''), border=0, align='C')
+
+    # حقل "تاريخ الانتهاء"
+    pdf.set_xy(450, 250)
+    pdf.cell(350, 30, data.get('end-date', ''), border=0, align='C')
+
+    # حقل "الراتب"
+    pdf.set_xy(200, 280)
+    pdf.cell(150, 30, data.get('salary', ''), border=0, align='C')
+
+    # حقل "الحالة الاجتماعية"
+    pdf.set_xy(50, 280)
+    pdf.cell(100, 30, data.get('marital-status', ''), border=0, align='C')
+
+    # حقل "جدة حي"
+    pdf.set_xy(50, 350)
+    pdf.cell(300, 30, data.get('jeddah-neighborhood', ''), border=0, align='C')
+
+    # حقل "اسم العميل"
+    pdf.set_xy(450, 180)
+    pdf.cell(350, 30, data.get('client-name', ''), border=0, align='C')
+
+    # حقل "نوع الإثبات"
+    pdf.set_xy(450, 215)
+    pdf.cell(350, 30, data.get('id-type', ''), border=0, align='C')
+
+    # حقل "نهاية العقد"
+    pdf.set_xy(50, 320)
+    pdf.cell(300, 30, data.get('end-contract', ''), border=0, align='C')
+
+    # حقل "شقة رقم"
+    pdf.set_xy(50, 380)
+    pdf.cell(300, 30, data.get('apartment-number', ''), border=0, align='C')
+
+    # حقل "التأمين المدفوع"
+    pdf.set_xy(50, 420)
+    pdf.cell(300, 30, data.get('insurance-paid', ''), border=0, align='C')
+
+    # حقل "أجرة"
+    pdf.set_xy(480, 540)
+    pdf.cell(100, 30, data.get('rent-fee', ''), border=0, align='C')
+
+    # حقل "نفقة"
+    pdf.set_xy(630, 590)
+    pdf.cell(150, 30, data.get('maintenance-fee', ''), border=0, align='C')
+
+    # حقل "توقيع المالك"
+    pdf.set_xy(690, 630)
+    pdf.cell(150, 30, data.get('owner-signature', ''), border=0, align='C')
+
+    # حقل "الجوال"
+    pdf.set_xy(450, 280)
+    pdf.cell(350, 30, data.get('phone', ''), border=0, align='C')
+
+    # حقل "بداية العقد"
+    pdf.set_xy(450, 320)
+    pdf.cell(350, 30, data.get('start-date', ''), border=0, align='C')
+
+    # حقل "الإيجار الشهري"
+    pdf.set_xy(450, 350)
+    pdf.cell(350, 30, data.get('monthly-rent', ''), border=0, align='C')
+
+    # حقل "عدد الأشهر"
+    pdf.set_xy(450, 380)
+    pdf.cell(350, 30, data.get('months', ''), border=0, align='C')
+
+    # حقل "الإجمالي"
+    pdf.set_xy(450, 420)
+    pdf.cell(350, 30, data.get('total', ''), border=0, align='C')
+
+    # حقل "المبلغ المدفوع"
+    pdf.set_xy(620, 460)
+    pdf.cell(150, 30, data.get('amount-paid', ''), border=0, align='C')
+
+    # حقل "مبلغا وقدره"
+    pdf.set_xy(120, 460)
+    pdf.cell(450, 30, data.get('amount-in-words', ''), border=0, align='C')
+
+    pdf_path = f"static/contract_{data.get('contract-number', 'unknown')}.pdf"
+    pdf.output(pdf_path)
+    return pdf_path
