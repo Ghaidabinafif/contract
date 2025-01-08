@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>عقد الإيجار</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            direction: rtl;
+            background-color: #ffffff;
+        }
+
+        /* إعدادات الصورة كخلفية */
+        .contract {
+            position: relative;
+            width: 3508px; /* عرض الصورة */
+            height: 2480px; /* ارتفاع الصورة */
+            background: url('/static/contract.jpg') no-repeat center;
+            background-size: cover; /* لضمان أن الصورة تغطي الحاوية بالكامل */
+            margin: auto; /* لمحاذاة الصورة في الوسط */
+        }
+
+        /* إعدادات الحقول */
+        .input-field {
+            position: absolute; /* لتثبيت الحقول فوق الصورة */
+            border: 1px solid #ccc;
+            background: rgba(255, 255, 255, 0.8);
+            font-size: 16px;
+            padding: 5px;
+            box-sizing: border-box;
+        }
+
+        /* إعدادات حقل التاريخ */
+        #date, #end-date, #start-date, #end-contract{
+            top: 484px; /* المسافة من أعلى الصورة */
+            left: 2521px; /* المسافة من يسار الصورة */
+            width: 442px; /* عرض الحقل */
+            height: 94px; /* ارتفاع الحقل */
+            text-align: center;
+            font-size: 45px;
+        }
+
+        /* إعدادات حقل رقم العقد */
+        #contract-number {
+            top: 484px;
+            left: 362px;
+            width: 314px; /* العرض */
+            height: 94px; /* الارتفاع */
+            font-size: 35px;
+            padding: 10px;
+        }
+
+        /* إعدادات حقل الجنسية */
+        #nationality {
+            top: 671px;
+            left: 161px;
+            width: 1030px; /* العرض */
+            height: 94px; /* الارتفاع */
+            font-size: 35px;
+            padding: 10px;
+        }
+
+        /* إعدادات حقل رقم الإثبات */
+        #id-number {
+            top: 791px;
+            left: 161px;
+            width: 1030px; /* العرض */
+            height: 94px; /* الارتفاع */
+            font-size: 35px;
+            padding: 10px;
+        }
+
+        /* إعدادات حقل العمل */
+        #job {
+            top: 912px;
+            left: 161px;
+            width: 1030px; /* العرض */
+            height: 94px; /* الارتفاع */
+            font-size: 35px;
+            padding: 10px;
+        }
+
+         /* إعدادات حقل تاريخ الإنتهاء  */
+         #end-date {
+            top: 911px;
+            left: 1697px;
+            width: 1207px; /* العرض */
+            height: 94px; /* الارتفاع */
+            padding: 10px;
+        }
+
+        /* إعدادات حقل الراتب */
+        #salary {
+            top: 1032px;
+            left: 716px;
+            width: 475px; /* العرض */
+            height: 94px; /* الارتفاع */
+            font-size: 35px;
+            padding: 10px;
+        }
+
+        /* إعدادات حقل الحالة الاجتماعية */
+        #marital-status {
+            top: 1032px;
+            left: 161px;
+            width: 314px; /* العرض */
+            height: 94px; /* الارتفاع */
+            font-size: 35px;
+            padding: 10px;
+        }
+
+        /* إعدادات حقل جدة حي */
+        #jeddah-neighborhood {
+            top: 1273px; /* موقع حقل جدة حي */
+            left: 161px;
+            width: 1030px; /* العرض */
+            height: 94px; /* الارتفاع */
+            font-size: 35px;
+            padding: 10px;
+        }
+
+        /* إعدادات حقل اسم العميل */
+        #client-name {
+            top: 671px;
+            left: 1697px;
+            width: 1207px;
+            height: 94px;
+            font-size: 35px;
+            padding: 10px;
+        }
+
+        /* إعدادات حقل نوع الإثبات */
+        #id-type {
+            top: 791px;
+            left: 1697px;
+            width: 1207px;
+            height: 94px;
+            font-size: 35px;
+            padding: 10px;
+        }
+
+        /* إعدادات حقل نهاية العقد */
+        #end-contract {
+            top: 1154px; 
+            left: 161px;
+            width: 1030px;
+            height: 94px;
+        }
+
+        /* إعدادات حقل شقة رقم */
+        #apartment-number {
+            top: 1393px; 
+            left: 161px;
+            width: 1030px;
+            height: 94px;
+            font-size: 35px;
+            padding: 10px;
+        }
+
+        /* إعدادات حقل التأمين المدفوع */
+        #insurance-paid {
+            top: 1514px; /* المسافة من أعلى الصورة */
+            left: 161px; /* المسافة من يسار الصورة */
+            width: 1030px; /* العرض */
+            height: 94px; /* الارتفاع */
+            font-size: 35px;
+            padding: 10px;
+        }
+
+        /* إعدادات حقل أجرة */
+        #rent-fee {
+            top: 2018px; /* المسافة من أعلى الصورة */
+            left: 1794px; /* المسافة من يسار الصورة */
+            width: 257px; /* العرض */
+            height: 60px; /* الارتفاع */
+            font-size: 35px;
+            padding: 10px;
+        }
+
+        /* إعدادات حقل نفقة */
+        #maintenance-fee {
+            top: 2193px; /* المسافة من أعلى الصورة */
+            left: 2352px; /* المسافة من يسار الصورة */
+            width: 525px; /* العرض */
+            height: 60px; /* الارتفاع */
+            font-size: 35px;
+            padding: 10px;
+        }
+
+        /* إعدادات حقل توقيع المالك */
+        #owner-signature {
+            top: 2346px; /* المسافة من أعلى الصورة */
+            left: 2572px; /* المسافة من يسار الصورة */
+            width: 525px; /* العرض */
+            height: 60px; /* الارتفاع */
+            font-size: 35px;
+            padding: 10px;
+        }
+
+        /* إعدادات حقل الجوال */
+        #phone {
+            top: 1032px;
+            left: 1697px;
+            width: 1207px;
+            height: 94px;
+            font-size: 35px;
+            padding: 10px;
+        }
+
+        /* إعدادات حقل بداية العقد */
+        #start-date {
+            top: 1151px;
+            left: 1697px;
+            width: 1207px;
+            height: 94px;
+        }
+
+        /* إعدادات حقل الإيجار الشهري */
+        #monthly-rent {
+            top: 1273px;
+            left: 1697px;
+            width: 1207px;
+            height: 94px;
+            font-size: 35px;
+            padding: 10px;
+        }
+
+        /* إعدادات حقل عدد الأشهر */
+        #months {
+            top: 1393px;
+            left: 1697px;
+            width: 1207px;
+            height: 94px;
+            font-size: 35px;
+            padding: 10px;
+        }
+
+        /* إعدادات حقل الإجمالي */
+        #total {
+            top: 1514px;
+            left: 1697px;
+            width: 1207px;
+            height: 94px;
+            font-size: 35px;
+            padding: 10px;
+            background-color: rgba(230, 230, 230, 0.8); /* لجعل الحقل مميز */
+            pointer-events: none; /* لمنع المستخدم من التعديل عليه */
+        }
+
+        /* إعدادات حقل المبلغ المدفوع */
+        #amount-paid {
+            top: 1633px;
+            left: 2330px;
+            width: 575px;
+            height: 96px;
+            font-size: 35px;
+            padding: 10px;
+        }
+
+        /* إعدادات حقل "مبلغا وقدره" الجديد */
+        #amount-in-words {
+            top: 1633px;
+            left: 395px;
+            width: 1561px;
+            height: 96px;
+            font-size: 35px;
+            padding: 10px;
+        }
+
+        button[type="submit"] {
+            position: absolute;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 30px 50px;
+            font-size: 35px;
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        button[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+    <form action="/submit" method="POST">
+        <div class="contract">
+            <!-- حقول الإدخال -->
+            <input type="date" id="date" name="date" class="input-field">
+            <input type="text" id="contract-number" name="contract-number" class="input-field">
+            <input type="text" id="nationality" name="nationality" class="input-field">
+            <input type="text" id="id-number" name="id-number" class="input-field">
+            <input type="text" id="job" name="job" class="input-field">
+            <input type="text" id="salary" name="salary" class="input-field">
+            <input type="text" id="marital-status" name="marital-status" class="input-field">
+            <select id="jeddah-neighborhood" name="jeddah-neighborhood" class="input-field">
+                <option value="" disabled selected>اختر الحي</option>
+                <option value="الروابي">الروابي</option>
+                <option value="بني مالك 4">بني مالك 4</option>
+            </select>
+            <input type="text" id="apartment-number" name="apartment-number" class="input-field">
+            <input type="text" id="client-name" name="client-name" class="input-field">
+            <select id="id-type" name="id-type" class="input-field">
+                <option value="" disabled selected>اختر نوع الإثبات</option>
+                <option value="بطاقة أحوال">بطاقة أحوال</option>
+                <option value="هوية مقيم">هوية مقيم</option>
+                <option value="جواز سفر">جواز سفر</option>
+            </select>
+            <input type="date" id="end-date" name="end-date" class="input-field">
+            <input type="date" id="end-contract" name="end-contract" class="input-field">
+            <input type="text" id="insurance-paid" name="insurance-paid" class="input-field">
+            <input type="text" id="rent-fee" name="rent-fee" class="input-field">
+            <input type="text" id="maintenance-fee" name="maintenance-fee" class="input-field">
+            <input type="text" id="owner-signature" name="owner-signature" class="input-field">
+            <input type="text" id="phone" name="phone" class="input-field">
+            <input type="date" id="start-date" name="start-date" class="input-field">
+            <input type="number" id="monthly-rent" name="monthly-rent" class="input-field">
+            <input type="number" id="months" name="months" class="input-field">
+            <input type="text" id="total" name="total" class="input-field" readonly>
+            <input type="number" id="amount-paid" name="amount-paid" class="input-field">
+            <input type="text" id="amount-in-words" name="amount-in-words" class="input-field">
+            
+            <!-- زر الإرسال -->
+            <button type="submit">إرسال</button>
+        </div>
+    </form>
+
+    <script>
+        // الوصول إلى الحقول
+        const monthlyRentField = document.getElementById('monthly-rent');
+        const monthsField = document.getElementById('months');
+        const totalField = document.getElementById('total');
+
+        // تحديث الإجمالي تلقائيًا عند تغيير أي من الحقول
+        function updateTotal() {
+            const monthlyRent = parseFloat(monthlyRentField.value) || 0; // قيمة الإيجار الشهري
+            const months = parseFloat(monthsField.value) || 0; // عدد الأشهر
+            const total = monthlyRent * months; // حساب الإجمالي
+            totalField.value = total.toFixed(2); // عرض الإجمالي بصيغة عشرية
+        }
+
+        // إضافة مستمعي الأحداث لتحديث الإجمالي عند التغيير
+        monthlyRentField.addEventListener('input', updateTotal);
+        monthsField.addEventListener('input', updateTotal);
+    </script>
+</body>
+</html>
