@@ -40,11 +40,6 @@ def generate_pdf(data):
     pdf.add_font('Amiri', '', 'static/Amiri-Regular.ttf', uni=True)  # إضافة خط عربي
     pdf.set_font('Amiri', '', 28)  # حجم الخط العربي
 
-    # استخدام اسم العميل لحفظ الملف
-    client_name = data.get('client-name', 'contract')  # إذا لم يتم إدخال اسم العميل، يستخدم "contract" كاسم افتراضي
-    sanitized_client_name = client_name.replace(' ', '_')  # استبدال المسافات بـ "_"
-    pdf_path = f"static/{sanitized_client_name}.pdf"  # اسم الملف النهائي
-
     # كتابة القيم في أماكنها المناسبة بناءً على الإحداثيات
     pdf.set_xy(650, 125)  # التاريخ
     pdf.cell(120, 30, prepare_arabic_text(data.get('date', '')), border=0, align='C')
@@ -54,12 +49,6 @@ def generate_pdf(data):
 
     pdf.set_xy(50, 180)  # الجنسية
     pdf.cell(300, 30, prepare_arabic_text(data.get('nationality', '')), border=0, align='C')
-
-    pdf.set_xy(450, 180)  # اسم العميل
-    pdf.cell(350, 30, prepare_arabic_text(data.get('client-name', '')), border=0, align='C')
-
-    pdf.set_xy(450, 215)  # نوع الإثبات
-    pdf.cell(350, 30, prepare_arabic_text(data.get('id-type', '')), border=0, align='C')
 
     pdf.set_xy(50, 215)  # رقم الإثبات
     pdf.cell(300, 30, prepare_arabic_text(data.get('id-number', '')), border=0, align='C')
@@ -78,6 +67,12 @@ def generate_pdf(data):
 
     pdf.set_xy(50, 350)  # جدة حي
     pdf.cell(300, 30, prepare_arabic_text(data.get('jeddah-neighborhood', '')), border=0, align='C')
+
+    pdf.set_xy(450, 180)  # اسم العميل
+    pdf.cell(350, 30, prepare_arabic_text(data.get('client-name', '')), border=0, align='C')
+
+    pdf.set_xy(450, 215)  # نوع الإثبات
+    pdf.cell(350, 30, prepare_arabic_text(data.get('id-type', '')), border=0, align='C')
 
     pdf.set_xy(50, 320)  # نهاية العقد
     pdf.cell(300, 30, prepare_arabic_text(data.get('end-contract', '')), border=0, align='C')
@@ -118,8 +113,31 @@ def generate_pdf(data):
     pdf.set_xy(120, 460)  # مبلغا وقدره
     pdf.cell(450, 30, prepare_arabic_text(data.get('amount-in-words', '')), border=0, align='C')
 
+    pdf_path = f"static/contract_{data.get('contract-number', 'unknown')}.pdf"
     pdf.output(pdf_path)
-    return pdf_path, sanitized_client_name  # إضافة اسم العميل في الإرجاع
+    return pdf_path
+
+@app.route('/')
+def login():
+    return '''
+        <form method="POST" action="/check-password">
+            <label for="password">ادخل كلمة المرور:</label>
+            <input type="password" id="password" name="password">
+            <button type="submit">تسجيل الدخول</button>
+        </form>
+    '''
+
+@app.route('/check-password', methods=['POST'])
+def check_password():
+    password = request.form.get('password')
+    if password == PASSWORD:
+        return redirect(url_for('contract_page'))
+    else:
+        return "كلمة المرور غير صحيحة! حاول مرة أخرى."
+
+@app.route('/contract-page')
+def contract_page():
+    return render_template('index.html')
 
 @app.route('/submit', methods=['POST'])
 def submit():
@@ -155,8 +173,10 @@ def submit():
         ])
 
     # توليد ملف PDF
-    pdf_path, client_name = generate_pdf(data)
-    return send_file(pdf_path, as_attachment=True, download_name=f"{client_name}.pdf")
+    pdf_path = generate_pdf(data)
+    return send_file(pdf_path, as_attachment=True, download_name="contract.pdf")
 
 if __name__ == '__main__':
     app.run(debug=True)
+
+
