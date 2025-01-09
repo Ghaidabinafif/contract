@@ -270,6 +270,15 @@
             padding: 10px;
         }
 
+        #transfer {
+            top: 1633px;
+            left: 395px;
+            width: 300px;
+            height: 96px;
+            font-size: 35px;
+            padding: 10px;
+        }
+
         button[type="submit"] {
             position: absolute;
             bottom: 50px;
@@ -318,8 +327,16 @@
             <input type="date" id="end-contract" name="end-contract" class="input-field">
             <input type="text" id="insurance-paid" name="insurance-paid" class="input-field">
             <input type="text" id="rent-fee" name="rent-fee" class="input-field">
-            <input type="text" id="maintenance-fee" name="maintenance-fee" class="input-field">
-            <input type="text" id="owner-signature" name="owner-signature" class="input-field">
+            <select id="maintenance-fee" name="maintenance-fee" class="input-field">
+                <option value="" disabled selected>اختر المسؤول عن النفقة</option>
+                <option value="المالك">المالك</option>
+                <option value="المستأجر">المستأجر</option>
+            </select>
+            <select id="owner-signature" name="owner-signature" class="input-field">
+                <option value="" disabled selected>اختر توقيع المالك</option>
+                <option value="عبدالقادر بن عفيف">عبدالقادر بن عفيف</option>
+                <option value="أسماء عبدالقادر">أسماء عبدالقادر</option>
+            </select>
             <input type="text" id="phone" name="phone" class="input-field">
             <input type="date" id="start-date" name="start-date" class="input-field">
             <input type="number" id="monthly-rent" name="monthly-rent" class="input-field">
@@ -327,6 +344,13 @@
             <input type="text" id="total" name="total" class="input-field" readonly>
             <input type="number" id="amount-paid" name="amount-paid" class="input-field">
             <input type="text" id="amount-in-words" name="amount-in-words" class="input-field">
+            <select id="transfer" name="transfer" class="input-field">
+                <option value="" disabled selected>اختر نوع التحويل</option>
+                <option value="تحويل بنكي">تحويل بنكي</option>
+                <option value="نقدي">نقدي</option>
+            </select>
+            
+            
             
             <!-- زر الإرسال -->
             <button type="submit">إرسال</button>
