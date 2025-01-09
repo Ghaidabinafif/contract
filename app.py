@@ -36,9 +36,9 @@ init_csv()
 def generate_pdf(data):
     pdf = FPDF(unit='mm', format=(914.4, 685.8))  # أبعاد صفحة PDF مماثلة للصورة
     pdf.add_page()
-    pdf.image('static/contract.jpg', x=0, y=0, w=914.4, h=685.8)  # إدراج الصورة الخلفية
+    pdf.image('static/contract_new.jpg', x=0, y=0, w=914.4, h=685.8)  # إدراج الصورة الخلفية
     pdf.add_font('Amiri', '', 'static/Amiri-Regular.ttf', uni=True)  # إضافة خط عربي
-    pdf.set_font('Amiri', '', 28)  # حجم الخط العربي
+    pdf.set_font('Amiri', '', 35)  # حجم الخط العربي
 
     # كتابة القيم في أماكنها المناسبة بناءً على الإحداثيات
     pdf.set_xy(650, 125)  # التاريخ
