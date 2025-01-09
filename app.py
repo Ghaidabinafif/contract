@@ -39,6 +39,11 @@ def generate_pdf(data):
     pdf.image('static/contract.jpg', x=0, y=0, w=914.4, h=685.8)  # إدراج الصورة الخلفية
     pdf.add_font('Amiri', '', 'static/Amiri-Regular.ttf', uni=True)  # إضافة خط عربي
     pdf.set_font('Amiri', '', 28)  # حجم الخط العربي
+    
+    # استخدام اسم العميل لحفظ الملف
+    client_name = data.get('client-name', 'contract')  # إذا لم يتم إدخال اسم العميل، يستخدم "contract" كاسم افتراضي
+    sanitized_client_name = ''.join(e for e in client_name if e.isalnum())  # إزالة الأحرف الخاصة من اسم العميل
+    download_name = f"{sanitized_client_name}.pdf"  # اسم الملف النهائي
 
     # كتابة القيم في أماكنها المناسبة بناءً على الإحداثيات
     pdf.set_xy(650, 125)  # التاريخ
