@@ -85,7 +85,7 @@ def generate_pdf(data):
     pdf.add_font('Amiri', '', 'static/Amiri-Regular.ttf', uni=True)  # خط عربي
     pdf.set_font('Amiri', '', 35)  # حجم الخط
 
-    base_url = "http://127.0.0.1:5000/contract-status"
+    base_url = "https://contract-8duk.onrender.com/contract-status"
     contract_number = data.get('contract-number', '')
 
     # إنشاء الباركود
