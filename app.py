@@ -178,6 +178,14 @@ def generate_pdf(data):
     pdf.output(pdf_path)
     return pdf_path
 
+@app.route('/view-database')
+def view_database():
+    conn = get_db_connection()
+    contracts = conn.execute('SELECT * FROM contracts').fetchall()
+    conn.close()
+    return render_template('view_database.html', contracts=contracts)
+
+
 @app.route('/')
 def login():
     return '''

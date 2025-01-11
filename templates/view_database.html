@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contracts Database</title>
+</head>
+<body>
+    <h1>Contracts Database</h1>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Date</th>
+                <th>Contract Number</th>
+                <th>Nationality</th>
+                <th>ID Number</th>
+                <th>ID Type</th>
+                <th>Job</th>
+                <th>Salary</th>
+                <th>Marital Status</th>
+                <th>Apartment Number</th>
+                <th>Client Name</th>
+                <th>Start Date</th>
+                <th>End Contract</th>
+                <th>Contract Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for contract in contracts %}
+            <tr>
+                <td>{{ contract['id'] }}</td>
+                <td>{{ contract['date'] }}</td>
+                <td>{{ contract['contract_number'] }}</td>
+                <td>{{ contract['nationality'] }}</td>
+                <td>{{ contract['id_number'] }}</td>
+                <td>{{ contract['id_type'] }}</td>
+                <td>{{ contract['job'] }}</td>
+                <td>{{ contract['salary'] }}</td>
+                <td>{{ contract['marital_status'] }}</td>
+                <td>{{ contract['apartment_number'] }}</td>
+                <td>{{ contract['client_name'] }}</td>
+                <td>{{ contract['start_date'] }}</td>
+                <td>{{ contract['end_contract'] }}</td>
+                <td>{{ contract['contract_status'] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
