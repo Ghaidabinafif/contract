@@ -92,7 +92,6 @@ def generate_pdf(data):
 
 
     # إنشاء الباركود
-    qr_data = f"رقم العقد: {data.get('contract-number', '')}\nبداية: {data.get('start-date', '')}\nنهاية: {data.get('end-contract', '')}\nالحالة: {data.get('contract-status', '')}"
     qr = qrcode.QRCode(box_size=20, border=4)
     qr.add_data(qr_data)
     qr.make(fit=True)
