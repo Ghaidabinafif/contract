@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>صلاحية العقد</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            margin: 50px auto;
+            padding: 20px;
+            max-width: 600px;
+            background: #ffffff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+        h1 {
+            font-size: 24px;
+            color: #333;
+        }
+        .status {
+            margin: 20px 0;
+            font-size: 20px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .status.valid {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.expired {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.not-started {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+        p {
+            font-size: 18px;
+            color: #555;
+        }
+        .details {
+            margin: 20px auto;
+            text-align: left;
+            background: #f9f9f9;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        .details span {
+            display: block;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>صلاحية العقد</h1>
+        {% if error %}
+            <p>{{ error }}</p>
+        {% else %}
+            <div class="status {% if status == 'فعال' %}valid{% elif status == 'منتهي' %}expired{% else %}not-started{% endif %}">
+                {% if status == 'فعال' %}
+                    هذا العقد فعال
+                {% elif status == 'منتهي' %}
+                    هذا العقد منتهي وغير فعال
+                {% else %}
+                    هذا العقد لم يبدأ بعد
+                {% endif %}
+            </div>
+            <div class="details">
+                <span><strong>رقم العقد:</strong> {{ contract_number }}</span>
+                <span><strong>بداية العقد:</strong> {{ start_date }}</span>
+                <span><strong>نهاية العقد:</strong> {{ end_contract }}</span>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>

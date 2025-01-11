@@ -3,6 +3,8 @@ import csv
 from fpdf import FPDF
 import arabic_reshaper
 from bidi.algorithm import get_display
+import qrcode
+from datetime import datetime
 
 app = Flask(__name__)
 
@@ -25,33 +27,86 @@ def init_csv():
                 'الوظيفة', 'الراتب', 'الحالة الاجتماعية', 'رقم الشقة', 'اسم العميل',
                 'تاريخ الانتهاء', 'نهاية العقد', 'التأمين المدفوع', 'أجرة',
                 'نفقة الصيانة', 'توقيع المالك', 'رقم الجوال', 'تاريخ البداية',
-                'الإيجار الشهري', 'عدد الأشهر', 'الإجمالي', 'المبلغ المدفوع', 'المبلغ كتابةً'
+                'الإيجار الشهري', 'عدد الأشهر', 'الإجمالي', 'المبلغ المدفوع', 'المبلغ كتابةً', 'حالة العقد'
             ])
     except FileExistsError:
         pass
 
 init_csv()
 
+# دالة لحساب حالة العقد
+def get_contract_status(start_date, end_contract):
+    today = datetime.now().date()
+    start = datetime.strptime(start_date, '%Y-%m-%d').date() if start_date else None
+    end = datetime.strptime(end_contract, '%Y-%m-%d').date() if end_contract else None
+
+    if start and end:
+        if today < start:
+            return "لم يبدأ"
+        elif start <= today <= end:
+            return "فعال"
+        else:
+            return "منتهي"
+    return "غير معروف"
+
+@app.route('/contract-status')
+def contract_status():
+    contract_number = request.args.get('contract_number')
+    with open(csv_file, newline='', encoding='utf-8-sig') as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            if row['رقم العقد'] == contract_number:
+                # إعادة البيانات كـ JSON إذا تم طلبها
+                if request.headers.get('Accept') == 'application/json':
+                    return jsonify({
+                        "contract_number": row['رقم العقد'],
+                        "start_date": row['تاريخ البداية'],
+                        "end_contract": row['نهاية العقد'],
+                        "status": row['حالة العقد']
+                    })
+                # إعادة صفحة HTML إذا لم يُطلب JSON
+                return render_template('contract_status.html', 
+                                       contract_number=row['رقم العقد'],
+                                       start_date=row['تاريخ البداية'],
+                                       end_contract=row['نهاية العقد'],
+                                       status=row['حالة العقد'])
+    # في حالة عدم العثور على العقد
+    if request.headers.get('Accept') == 'application/json':
+        return jsonify({"error": "العقد غير موجود"}), 404
+    return render_template('contract_status.html', error="العقد غير موجود")
+
+
+
 # توليد ملف PDF
 def generate_pdf(data):
-    # إعداد الصفحة
     pdf = FPDF(unit='mm', format=(914.4, 685.8))  # أبعاد صفحة PDF
     pdf.add_page()
     pdf.image('static/contract_new.jpg', x=0, y=0, w=914.4, h=685.8)  # الخلفية
     pdf.add_font('Amiri', '', 'static/Amiri-Regular.ttf', uni=True)  # خط عربي
     pdf.set_font('Amiri', '', 35)  # حجم الخط
 
-    # تعريف حدود الصفحة
-    page_width = 914.4
-    page_height = 685.8
-    margin = 10  # الهامش
+    base_url = "http://127.0.0.1:5000/contract-status"
+    contract_number = data.get('contract-number', '')
+
+    # إنشاء الباركود
+    qr_data = f"رقم العقد: {data.get('contract-number', '')}\nبداية: {data.get('start-date', '')}\nنهاية: {data.get('end-contract', '')}\nالحالة: {data.get('contract-status', '')}"
+    qr = qrcode.QRCode(box_size=20, border=4)
+    qr.add_data(qr_data)
+    qr.make(fit=True)
+
+    # حفظ صورة الباركود مؤقتًا
+    qr_image_path = "static/qr_temp.png"
+    qr.make_image(fill="black", back_color="white").save(qr_image_path)
+
+    # إضافة الباركود إلى PDF
+    pdf.image(qr_image_path, x=50, y=530, w=100)
 
     # تعريف نصوص الحقول مع التأكد من بقائها داخل الصفحة
     def add_text(x, y, width, height, text, align='C'):
         """إضافة نص داخل الصفحة مع التأكد من عدم تجاوز الحدود"""
-        if y + height > page_height - margin:
+        if y + height > 685.8 - 10:  # التأكد من أن النص لا يخرج عن الصفحة
             print(f"Warning: تجاوز النص الحدود السفلية عند y={y}. النص لن يتم عرضه.")
-            return  # إذا تجاوزت الإحداثيات، لا تعرض النص
+            return
         pdf.set_xy(x, y)
         pdf.cell(width, height, prepare_arabic_text(text), border=0, align=align)
 
@@ -68,28 +123,23 @@ def generate_pdf(data):
     add_text(450, 180, 350, 30, data.get('client-name', ''))  # اسم العميل
     add_text(450, 215, 350, 30, data.get('id-type', ''))  # نوع الإثبات
     add_text(50, 320, 300, 30, data.get('end-contract', ''))  # نهاية العقد
-    add_text(50, 380, 300, 30, data.get('apartment-number', ''))  # شقة رقم
+    add_text(50, 385, 300, 30, data.get('apartment-number', ''))  # شقة رقم
     add_text(50, 420, 300, 30, data.get('insurance-paid', ''))  # التأمين المدفوع
-
-    # تعديل المواضع
-    add_text(480, 550, 100, 30, data.get('rent-fee', ''))  # أجرة (خفض قليلاً)
-    add_text(630, 600, 150, 30, data.get('maintenance-fee', ''))  # نفقة (خفض قليلاً)
-
-    add_text(620, 450, 150, 30, data.get('amount-paid', ''))  # المبلغ المدفوع (رفع قليلاً)
-    add_text(120, 450, 450, 30, data.get('amount-in-words', ''))  # مبلغا وقدره (رفع قليلاً)
-
+    add_text(480, 550, 100, 30, data.get('rent-fee', ''))  # أجرة
+    add_text(630, 600, 150, 30, data.get('maintenance-fee', ''))  # نفقة
+    add_text(620, 450, 150, 30, data.get('amount-paid', ''))  # المبلغ المدفوع
+    add_text(120, 450, 450, 30, data.get('amount-in-words', ''))  # مبلغا وقدره
     add_text(690, 630, 150, 30, data.get('owner-signature', ''))  # توقيع المالك
     add_text(450, 280, 350, 30, data.get('phone', ''))  # الجوال
     add_text(450, 320, 350, 30, data.get('start-date', ''))  # بداية العقد
     add_text(450, 350, 350, 30, data.get('monthly-rent', ''))  # الإيجار الشهري
-    add_text(450, 380, 350, 30, data.get('months', ''))  # عدد الأشهر
+    add_text(450, 385, 350, 30, data.get('months', ''))  # عدد الأشهر
     add_text(450, 420, 350, 30, data.get('total', ''))  # الإجمالي
 
     # حفظ ملف PDF
     pdf_path = f"static/contract_{data.get('contract-number', 'unknown')}.pdf"
     pdf.output(pdf_path)
     return pdf_path
-
 
 @app.route('/')
 def login():
@@ -117,6 +167,10 @@ def contract_page():
 def submit():
     data = request.form.to_dict()
 
+    # حساب حالة العقد
+    contract_status = get_contract_status(data.get('start-date'), data.get('end-contract'))
+    data['contract-status'] = contract_status
+
     # حفظ البيانات في ملف CSV
     with open(csv_file, 'a', newline='', encoding='utf-8-sig') as file:
         writer = csv.writer(file)
@@ -143,7 +197,8 @@ def submit():
             data.get('months'),
             data.get('total'),
             data.get('amount-paid'),
-            data.get('amount-in-words')
+            data.get('amount-in-words'),
+            contract_status
         ])
 
     # توليد ملف PDF
