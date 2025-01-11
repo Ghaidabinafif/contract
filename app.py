@@ -5,34 +5,64 @@ import arabic_reshaper
 from bidi.algorithm import get_display
 import qrcode
 from datetime import datetime
+import sqlite3
 
 app = Flask(__name__)
 
 PASSWORD = "asmaa"
-csv_file = 'contracts.csv'
+db_file = 'contracts.db'
+
+# دالة لإنشاء اتصال بقاعدة البيانات
+def get_db_connection():
+    conn = sqlite3.connect(db_file)
+    conn.row_factory = sqlite3.Row  # للحصول على البيانات كـ dictionary
+    return conn
+
+# دالة لإنشاء جدول العقود إذا لم يكن موجودًا
+def init_db():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS contracts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            date TEXT,
+            contract_number TEXT,
+            nationality TEXT,
+            id_number TEXT,
+            id_type TEXT,
+            job TEXT,
+            salary TEXT,
+            marital_status TEXT,
+            apartment_number TEXT,
+            client_name TEXT,
+            end_date TEXT,
+            end_contract TEXT,
+            insurance_paid TEXT,
+            rent_fee TEXT,
+            maintenance_fee TEXT,
+            owner_signature TEXT,
+            phone TEXT,
+            start_date TEXT,
+            monthly_rent TEXT,
+            months INTEGER,
+            total TEXT,
+            amount_paid TEXT,
+            amount_in_words TEXT,
+            contract_status TEXT
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+init_db()
+
+
 
 # دالة لمعالجة النصوص العربية
 def prepare_arabic_text(text):
     reshaped_text = arabic_reshaper.reshape(text)
     bidi_text = get_display(reshaped_text)
     return bidi_text
-
-# إنشاء ملف CSV إذا لم يكن موجودًا
-def init_csv():
-    try:
-        with open(csv_file, 'x', newline='', encoding='utf-8-sig') as file:
-            writer = csv.writer(file)
-            writer.writerow([
-                'التاريخ', 'رقم العقد', 'الجنسية', 'رقم الإثبات', 'نوع الإثبات',
-                'الوظيفة', 'الراتب', 'الحالة الاجتماعية', 'رقم الشقة', 'اسم العميل',
-                'تاريخ الانتهاء', 'نهاية العقد', 'التأمين المدفوع', 'أجرة',
-                'نفقة الصيانة', 'توقيع المالك', 'رقم الجوال', 'تاريخ البداية',
-                'الإيجار الشهري', 'عدد الأشهر', 'الإجمالي', 'المبلغ المدفوع', 'المبلغ كتابةً', 'حالة العقد'
-            ])
-    except FileExistsError:
-        pass
-
-init_csv()
 
 # دالة لحساب حالة العقد
 def get_contract_status(start_date, end_contract):
@@ -51,29 +81,34 @@ def get_contract_status(start_date, end_contract):
 
 @app.route('/contract-status')
 def contract_status():
-    contract_number = request.args.get('contract_number')
-    with open(csv_file, newline='', encoding='utf-8-sig') as file:
-        reader = csv.DictReader(file)
-        for row in reader:
-            if row['رقم العقد'] == contract_number:
-                # إعادة البيانات كـ JSON إذا تم طلبها
-                if request.headers.get('Accept') == 'application/json':
-                    return jsonify({
-                        "contract_number": row['رقم العقد'],
-                        "start_date": row['تاريخ البداية'],
-                        "end_contract": row['نهاية العقد'],
-                        "status": row['حالة العقد']
-                    })
-                # إعادة صفحة HTML إذا لم يُطلب JSON
-                return render_template('contract_status.html', 
-                                       contract_number=row['رقم العقد'],
-                                       start_date=row['تاريخ البداية'],
-                                       end_contract=row['نهاية العقد'],
-                                       status=row['حالة العقد'])
+    contract_number = request.args.get('contract_number')  # الحصول على رقم العقد من الطلب
+    conn = get_db_connection()  # إنشاء اتصال بقاعدة البيانات
+    contract = conn.execute('SELECT * FROM contracts WHERE contract_number = ?', (contract_number,)).fetchone()
+    conn.close()
+
+    if contract:
+        # إذا تم طلب البيانات بصيغة JSON
+        if request.headers.get('Accept') == 'application/json':
+            return jsonify({
+                "contract_number": contract['contract_number'],
+                "start_date": contract['start_date'],
+                "end_contract": contract['end_contract'],
+                "status": contract['contract_status']
+            })
+        # إذا لم يتم طلب JSON، عرض صفحة HTML
+        return render_template(
+            'contract_status.html',
+            contract_number=contract['contract_number'],
+            start_date=contract['start_date'],
+            end_contract=contract['end_contract'],
+            status=contract['contract_status']
+        )
+
     # في حالة عدم العثور على العقد
     if request.headers.get('Accept') == 'application/json':
         return jsonify({"error": "العقد غير موجود"}), 404
     return render_template('contract_status.html', error="العقد غير موجود")
+
 
 
 
@@ -173,35 +208,45 @@ def submit():
     contract_status = get_contract_status(data.get('start-date'), data.get('end-contract'))
     data['contract-status'] = contract_status
 
-    # حفظ البيانات في ملف CSV
-    with open(csv_file, 'a', newline='', encoding='utf-8-sig') as file:
-        writer = csv.writer(file)
-        writer.writerow([
-            data.get('date'),
-            data.get('contract-number'),
-            data.get('nationality'),
-            data.get('id-number'),
-            data.get('id-type'),
-            data.get('job'),
-            data.get('salary'),
-            data.get('marital-status'),
-            data.get('apartment-number'),
-            data.get('client-name'),
-            data.get('end-date'),
-            data.get('end-contract'),
-            data.get('insurance-paid'),
-            data.get('rent-fee'),
-            data.get('maintenance-fee'),
-            data.get('owner-signature'),
-            data.get('phone'),
-            data.get('start-date'),
-            data.get('monthly-rent'),
-            data.get('months'),
-            data.get('total'),
-            data.get('amount-paid'),
-            data.get('amount-in-words'),
+    # حفظ البيانات في SQLite
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('''
+        INSERT INTO contracts (
+            date, contract_number, nationality, id_number, id_type, job, salary,
+            marital_status, apartment_number, client_name, end_date, end_contract,
+            insurance_paid, rent_fee, maintenance_fee, owner_signature, phone,
+            start_date, monthly_rent, months, total, amount_paid, amount_in_words,
             contract_status
-        ])
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ''', (
+        data.get('date', None),
+        data.get('contract-number', None),
+        data.get('nationality', None),
+        data.get('id-number', None),
+        data.get('id-type', None),
+        data.get('job', None),
+        data.get('salary', None),
+        data.get('marital-status', None),
+        data.get('apartment-number', None),
+        data.get('client-name', None),
+        data.get('end-date', None),
+        data.get('end-contract', None),
+        data.get('insurance-paid', None),
+        data.get('rent-fee', None),
+        data.get('maintenance-fee', None),
+        data.get('owner-signature', None),
+        data.get('phone', None),
+        data.get('start-date', None),
+        data.get('monthly-rent', None),
+        data.get('months', None),
+        data.get('total', None),
+        data.get('amount-paid', None),
+        data.get('amount-in-words', None),
+        contract_status
+    ))
+    conn.commit()
+    conn.close()
 
     # توليد ملف PDF
     pdf_path = generate_pdf(data)
