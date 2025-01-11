@@ -87,6 +87,9 @@ def generate_pdf(data):
 
     base_url = "https://contract-8duk.onrender.com/contract-status"
     contract_number = data.get('contract-number', '')
+    
+    qr_data = f"{base_url}?contract_number={contract_number}"
+
 
     # إنشاء الباركود
     qr_data = f"رقم العقد: {data.get('contract-number', '')}\nبداية: {data.get('start-date', '')}\nنهاية: {data.get('end-contract', '')}\nالحالة: {data.get('contract-status', '')}"
