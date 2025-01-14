@@ -148,28 +148,30 @@ def submit():
     cursor = conn.cursor()
 
     apartment_number = data.get('apartment-number')
+    jeddah_neighborhood = data.get('jeddah-neighborhood')  # الحي
+    # التحقق من وجود عقد بنفس رقم الشقة والحي
     existing_contract = cursor.execute(
-        'SELECT * FROM contracts WHERE apartment_number = ?',
-        (apartment_number,)
+        'SELECT * FROM contracts WHERE apartment_number = ? AND jeddah_neighborhood = ?',
+        (apartment_number, jeddah_neighborhood)
     ).fetchone()
 
     if existing_contract:
-        cursor.execute('''
+        cursor.execute(''' 
             UPDATE contracts
             SET
                 date = ?, contract_number = ?, nationality = ?, id_number = ?, id_type = ?,
                 job = ?, salary = ?, marital_status = ?, client_name = ?, start_date = ?,
                 end_contract = ?, contract_status = ?, jeddah_neighborhood = ?, transfer = ?
-            WHERE apartment_number = ?
+            WHERE apartment_number = ? AND jeddah_neighborhood = ?
         ''', (
             data.get('date'), data.get('contract-number'), data.get('nationality'),
             data.get('id-number'), data.get('id-type'), data.get('job'), data.get('salary'),
             data.get('marital-status'), data.get('client-name'), data.get('start-date'),
-            data.get('end-contract'), contract_status, data.get('jeddah-neighborhood'),
-            data.get('transfer'), apartment_number
+            data.get('end-contract'), contract_status, jeddah_neighborhood, data.get('transfer'),
+            apartment_number, jeddah_neighborhood
         ))
     else:
-        cursor.execute('''
+        cursor.execute(''' 
             INSERT INTO contracts (
                 date, contract_number, nationality, id_number, id_type, job, salary,
                 marital_status, apartment_number, client_name, start_date, end_contract,
@@ -180,7 +182,7 @@ def submit():
             data.get('id-number'), data.get('id-type'), data.get('job'), data.get('salary'),
             data.get('marital-status'), data.get('apartment-number'), data.get('client-name'),
             data.get('start-date'), data.get('end-contract'), contract_status,
-            data.get('jeddah-neighborhood'), data.get('transfer')
+            jeddah_neighborhood, data.get('transfer')
         ))
 
     conn.commit()
@@ -188,6 +190,34 @@ def submit():
 
     pdf_path = generate_pdf(data)
     return send_file(pdf_path, as_attachment=True, download_name="contract.pdf")
+
+@app.route('/view-database', methods=['GET', 'POST'])
+def view_database():
+    conn = get_db_connection()
+    query = None
+    contracts = []
+
+    # تنفيذ البحث إذا كان هناك استعلام (POST request)
+    if request.method == 'POST':
+        query = request.form.get('search', None)
+        if query:
+            contracts = conn.execute('''
+    SELECT * FROM contracts
+    WHERE 
+        apartment_number LIKE ? OR
+        client_name LIKE ? OR
+        contract_number LIKE ? OR
+        jeddah_neighborhood LIKE ?
+''', (f'%{query}%', f'%{query}%', f'%{query}%', f'%{query}%')).fetchall()
+
+    else:
+        # في حالة عدم وجود استعلام، عرض كل العقود
+        contracts = conn.execute('SELECT * FROM contracts').fetchall()
+
+    conn.close()
+    
+    # إعادة الصفحة مع إرسال البيانات
+    return render_template('view_database.html', contracts=contracts, query=query)
 
 @app.route('/')
 def login():
