@@ -276,7 +276,7 @@ def submit():
                 total = ?,
                 amount_paid = ?,
                 amount_in_words = ?,
-                contract_status = ?
+                contract_status = ?,
                 jeddah_neighborhood = ?,
             transfer = ?
             WHERE apartment_number = ?
