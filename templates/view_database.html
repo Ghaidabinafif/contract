@@ -7,6 +7,15 @@
 </head>
 <body>
     <h1>Contracts Database</h1>
+
+    <!-- نموذج البحث -->
+    <form method="POST" action="/view-database">
+        <label for="search">Search:</label>
+        <input type="text" id="search" name="search" placeholder="Enter keyword (e.g., apartment number, client name, etc.)" value="{{ query or '' }}">
+        <button type="submit">Search</button>
+    </form>
+
+    <!-- عرض العقود -->
     <table border="1">
         <thead>
             <tr>
@@ -27,24 +36,30 @@
             </tr>
         </thead>
         <tbody>
-            {% for contract in contracts %}
-            <tr>
-                <td>{{ contract['id'] }}</td>
-                <td>{{ contract['date'] }}</td>
-                <td>{{ contract['contract_number'] }}</td>
-                <td>{{ contract['nationality'] }}</td>
-                <td>{{ contract['id_number'] }}</td>
-                <td>{{ contract['id_type'] }}</td>
-                <td>{{ contract['job'] }}</td>
-                <td>{{ contract['salary'] }}</td>
-                <td>{{ contract['marital_status'] }}</td>
-                <td>{{ contract['apartment_number'] }}</td>
-                <td>{{ contract['client_name'] }}</td>
-                <td>{{ contract['start_date'] }}</td>
-                <td>{{ contract['end_contract'] }}</td>
-                <td>{{ contract['contract_status'] }}</td>
-            </tr>
-            {% endfor %}
+            {% if contracts %}
+                {% for contract in contracts %}
+                <tr>
+                    <td>{{ contract['id'] }}</td>
+                    <td>{{ contract['date'] }}</td>
+                    <td>{{ contract['contract_number'] }}</td>
+                    <td>{{ contract['nationality'] }}</td>
+                    <td>{{ contract['id_number'] }}</td>
+                    <td>{{ contract['id_type'] }}</td>
+                    <td>{{ contract['job'] }}</td>
+                    <td>{{ contract['salary'] }}</td>
+                    <td>{{ contract['marital_status'] }}</td>
+                    <td>{{ contract['apartment_number'] }}</td>
+                    <td>{{ contract['client_name'] }}</td>
+                    <td>{{ contract['start_date'] }}</td>
+                    <td>{{ contract['end_contract'] }}</td>
+                    <td>{{ contract['contract_status'] }}</td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="14">No contracts found.</td>
+                </tr>
+            {% endif %}
         </tbody>
     </table>
 </body>

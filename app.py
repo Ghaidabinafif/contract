@@ -178,12 +178,30 @@ def generate_pdf(data):
     pdf.output(pdf_path)
     return pdf_path
 
-@app.route('/view-database')
+@app.route('/view-database', methods=['GET', 'POST'])
 def view_database():
     conn = get_db_connection()
-    contracts = conn.execute('SELECT * FROM contracts').fetchall()
+    
+    # التحقق مما إذا كان هناك طلب بحث
+    query = None
+    contracts = []
+    if request.method == 'POST':
+        query = request.form.get('search', None)  # الحصول على قيمة البحث
+        if query:
+            contracts = conn.execute('''
+                SELECT * FROM contracts
+                WHERE 
+                    apartment_number LIKE ? OR
+                    client_name LIKE ? OR
+                    contract_number LIKE ?
+            ''', (f'%{query}%', f'%{query}%', f'%{query}%')).fetchall()
+    else:
+        # عرض جميع العقود إذا لم يكن هناك بحث
+        contracts = conn.execute('SELECT * FROM contracts').fetchall()
+    
     conn.close()
-    return render_template('view_database.html', contracts=contracts)
+    return render_template('view_database.html', contracts=contracts, query=query)
+
 
 
 @app.route('/')
@@ -217,42 +235,110 @@ def submit():
     data['contract-status'] = contract_status
 
     # حفظ البيانات في SQLite
+    
+     # فتح اتصال بقاعدة البيانات
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute('''
-        INSERT INTO contracts (
-            date, contract_number, nationality, id_number, id_type, job, salary,
-            marital_status, apartment_number, client_name, end_date, end_contract,
-            insurance_paid, rent_fee, maintenance_fee, owner_signature, phone,
-            start_date, monthly_rent, months, total, amount_paid, amount_in_words,
+
+    # التحقق من وجود الشقة بناءً على رقم الشقة
+    apartment_number = data.get('apartment-number', None)
+    existing_contract = cursor.execute(
+        'SELECT * FROM contracts WHERE apartment_number = ?',
+        (apartment_number,)
+    ).fetchone()
+
+    if existing_contract:
+        # تحديث بيانات الشقة إذا كانت موجودة
+        cursor.execute('''
+            UPDATE contracts
+            SET
+                date = ?,
+                contract_number = ?,
+                nationality = ?,
+                id_number = ?,
+                id_type = ?,
+                job = ?,
+                salary = ?,
+                marital_status = ?,
+                client_name = ?,
+                end_date = ?,
+                end_contract = ?,
+                insurance_paid = ?,
+                rent_fee = ?,
+                maintenance_fee = ?,
+                owner_signature = ?,
+                phone = ?,
+                start_date = ?,
+                monthly_rent = ?,
+                months = ?,
+                total = ?,
+                amount_paid = ?,
+                amount_in_words = ?,
+                contract_status = ?
+            WHERE apartment_number = ?
+        ''', (
+            data.get('date', None),
+            data.get('contract-number', None),
+            data.get('nationality', None),
+            data.get('id-number', None),
+            data.get('id-type', None),
+            data.get('job', None),
+            data.get('salary', None),
+            data.get('marital-status', None),
+            data.get('client-name', None),
+            data.get('end-date', None),
+            data.get('end-contract', None),
+            data.get('insurance-paid', None),
+            data.get('rent-fee', None),
+            data.get('maintenance-fee', None),
+            data.get('owner-signature', None),
+            data.get('phone', None),
+            data.get('start-date', None),
+            data.get('monthly-rent', None),
+            data.get('months', None),
+            data.get('total', None),
+            data.get('amount-paid', None),
+            data.get('amount-in-words', None),
+            contract_status,
+            apartment_number
+        ))
+    else:
+        # إضافة بيانات جديدة إذا لم تكن الشقة موجودة
+        cursor.execute('''
+            INSERT INTO contracts (
+                date, contract_number, nationality, id_number, id_type, job, salary,
+                marital_status, apartment_number, client_name, end_date, end_contract,
+                insurance_paid, rent_fee, maintenance_fee, owner_signature, phone,
+                start_date, monthly_rent, months, total, amount_paid, amount_in_words,
+                contract_status
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            data.get('date', None),
+            data.get('contract-number', None),
+            data.get('nationality', None),
+            data.get('id-number', None),
+            data.get('id-type', None),
+            data.get('job', None),
+            data.get('salary', None),
+            data.get('marital-status', None),
+            data.get('apartment-number', None),
+            data.get('client-name', None),
+            data.get('end-date', None),
+            data.get('end-contract', None),
+            data.get('insurance-paid', None),
+            data.get('rent-fee', None),
+            data.get('maintenance-fee', None),
+            data.get('owner-signature', None),
+            data.get('phone', None),
+            data.get('start-date', None),
+            data.get('monthly-rent', None),
+            data.get('months', None),
+            data.get('total', None),
+            data.get('amount-paid', None),
+            data.get('amount-in-words', None),
             contract_status
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ''', (
-        data.get('date', None),
-        data.get('contract-number', None),
-        data.get('nationality', None),
-        data.get('id-number', None),
-        data.get('id-type', None),
-        data.get('job', None),
-        data.get('salary', None),
-        data.get('marital-status', None),
-        data.get('apartment-number', None),
-        data.get('client-name', None),
-        data.get('end-date', None),
-        data.get('end-contract', None),
-        data.get('insurance-paid', None),
-        data.get('rent-fee', None),
-        data.get('maintenance-fee', None),
-        data.get('owner-signature', None),
-        data.get('phone', None),
-        data.get('start-date', None),
-        data.get('monthly-rent', None),
-        data.get('months', None),
-        data.get('total', None),
-        data.get('amount-paid', None),
-        data.get('amount-in-words', None),
-        contract_status
-    ))
+        ))
+
     conn.commit()
     conn.close()
 
