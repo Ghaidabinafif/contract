@@ -5,20 +5,20 @@ import arabic_reshaper
 from bidi.algorithm import get_display
 import qrcode
 from datetime import datetime
-import sqlite3
+import sqlite3  # لإضافة قاعدة البيانات
 
 app = Flask(__name__)
 
 PASSWORD = "asmaa"
-db_file = 'contracts.db'
+DB_FILE = 'contracts.db'  # اسم ملف قاعدة البيانات
 
-# دالة لإنشاء اتصال بقاعدة البيانات
+# إنشاء اتصال بقاعدة البيانات
 def get_db_connection():
-    conn = sqlite3.connect(db_file)
-    conn.row_factory = sqlite3.Row  # للحصول على البيانات كـ dictionary
+    conn = sqlite3.connect(DB_FILE)
+    conn.row_factory = sqlite3.Row
     return conn
 
-# دالة لإنشاء جدول العقود إذا لم يكن موجودًا
+# إنشاء جدول العقود إذا لم يكن موجودًا
 def init_db():
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -35,19 +35,8 @@ def init_db():
             marital_status TEXT,
             apartment_number TEXT,
             client_name TEXT,
-            end_date TEXT,
-            end_contract TEXT,
-            insurance_paid TEXT,
-            rent_fee TEXT,
-            maintenance_fee TEXT,
-            owner_signature TEXT,
-            phone TEXT,
             start_date TEXT,
-            monthly_rent TEXT,
-            months INTEGER,
-            total TEXT,
-            amount_paid TEXT,
-            amount_in_words TEXT,
+            end_contract TEXT,
             contract_status TEXT,
             jeddah_neighborhood TEXT,
             transfer TEXT
@@ -56,15 +45,14 @@ def init_db():
     conn.commit()
     conn.close()
 
+# استدعاء دالة إنشاء قاعدة البيانات عند بدء تشغيل التطبيق
 init_db()
 
-# دالة لمعالجة النصوص العربية
 def prepare_arabic_text(text):
     reshaped_text = arabic_reshaper.reshape(text)
     bidi_text = get_display(reshaped_text)
     return bidi_text
 
-# دالة لحساب حالة العقد
 def get_contract_status(start_date, end_contract):
     today = datetime.now().date()
     start = datetime.strptime(start_date, '%Y-%m-%d').date() if start_date else None
@@ -81,8 +69,9 @@ def get_contract_status(start_date, end_contract):
 
 @app.route('/contract-status')
 def contract_status():
-    contract_number = request.args.get('contract_number')  # الحصول على رقم العقد من الطلب
-    conn = get_db_connection()  # إنشاء اتصال بقاعدة البيانات
+    contract_number = request.args.get('contract_number')
+    # البحث عن العقد في قاعدة البيانات
+    conn = get_db_connection()
     contract = conn.execute('SELECT * FROM contracts WHERE contract_number = ?', (contract_number,)).fetchone()
     conn.close()
 
@@ -94,22 +83,20 @@ def contract_status():
             end_contract=contract['end_contract'],
             status=contract['contract_status']
         )
+    else:
+        return "العقد غير موجود."
 
-    return render_template('contract_status.html', error="العقد غير موجود")
-
-# توليد ملف PDF
 def generate_pdf(data):
-    pdf = FPDF(unit='mm', format=(914.4, 685.8))  # أبعاد صفحة PDF
+    pdf = FPDF(unit='mm', format=(914.4, 685.8))
     pdf.add_page()
-    pdf.image('static/contract_new.jpg', x=0, y=0, w=914.4, h=685.8)  # الخلفية
-    pdf.add_font('Amiri', '', 'static/Amiri-Regular.ttf', uni=True)  # خط عربي
-    pdf.set_font('Amiri', '', 35)  # حجم الخط
+    pdf.image('static/contract_new.jpg', x=0, y=0, w=914.4, h=685.8)
+    pdf.add_font('Amiri', '', 'static/Amiri-Regular.ttf', uni=True)
+    pdf.set_font('Amiri', '', 35)
 
     base_url = "https://contract-8duk.onrender.com/contract-status"
     contract_number = data.get('contract-number', '')
     qr_data = f"{base_url}?contract_number={contract_number}"
 
-    # إنشاء الباركود
     qr = qrcode.QRCode(box_size=20, border=4)
     qr.add_data(qr_data)
     qr.make(fit=True)
@@ -122,7 +109,6 @@ def generate_pdf(data):
         pdf.set_xy(x, y)
         pdf.cell(width, height, prepare_arabic_text(text), border=0, align=align)
 
-    # كتابة البيانات في الحقول
     add_text(650, 125, 120, 30, data.get('date', ''))
     add_text(100, 125, 100, 30, data.get('contract-number', ''))
     add_text(50, 180, 300, 30, data.get('nationality', ''))
@@ -161,7 +147,7 @@ def submit():
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    apartment_number = data.get('apartment-number', None)
+    apartment_number = data.get('apartment-number')
     existing_contract = cursor.execute(
         'SELECT * FROM contracts WHERE apartment_number = ?',
         (apartment_number,)
@@ -172,41 +158,29 @@ def submit():
             UPDATE contracts
             SET
                 date = ?, contract_number = ?, nationality = ?, id_number = ?, id_type = ?,
-                job = ?, salary = ?, marital_status = ?, client_name = ?, end_date = ?,
-                end_contract = ?, insurance_paid = ?, rent_fee = ?, maintenance_fee = ?,
-                owner_signature = ?, phone = ?, start_date = ?, monthly_rent = ?, months = ?,
-                total = ?, amount_paid = ?, amount_in_words = ?, contract_status = ?,
-                jeddah_neighborhood = ?, transfer = ?
+                job = ?, salary = ?, marital_status = ?, client_name = ?, start_date = ?,
+                end_contract = ?, contract_status = ?, jeddah_neighborhood = ?, transfer = ?
             WHERE apartment_number = ?
         ''', (
-            data.get('date', None), data.get('contract-number', None), data.get('nationality', None),
-            data.get('id-number', None), data.get('id-type', None), data.get('job', None),
-            data.get('salary', None), data.get('marital-status', None), data.get('client-name', None),
-            data.get('end-date', None), data.get('end-contract', None), data.get('insurance-paid', None),
-            data.get('rent-fee', None), data.get('maintenance-fee', None), data.get('owner-signature', None),
-            data.get('phone', None), data.get('start-date', None), data.get('monthly-rent', None),
-            data.get('months', None), data.get('total', None), data.get('amount-paid', None),
-            data.get('amount-in-words', None), contract_status, data.get('jeddah-neighborhood', None),
-            data.get('transfer', None), apartment_number
+            data.get('date'), data.get('contract-number'), data.get('nationality'),
+            data.get('id-number'), data.get('id-type'), data.get('job'), data.get('salary'),
+            data.get('marital-status'), data.get('client-name'), data.get('start-date'),
+            data.get('end-contract'), contract_status, data.get('jeddah-neighborhood'),
+            data.get('transfer'), apartment_number
         ))
     else:
         cursor.execute('''
             INSERT INTO contracts (
                 date, contract_number, nationality, id_number, id_type, job, salary,
-                marital_status, apartment_number, client_name, end_date,                 end_contract, insurance_paid, rent_fee, maintenance_fee, owner_signature,
-                phone, start_date, monthly_rent, months, total, amount_paid, amount_in_words,
+                marital_status, apartment_number, client_name, start_date, end_contract,
                 contract_status, jeddah_neighborhood, transfer
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
-            data.get('date', None), data.get('contract-number', None), data.get('nationality', None),
-            data.get('id-number', None), data.get('id-type', None), data.get('job', None),
-            data.get('salary', None), data.get('marital-status', None), data.get('apartment-number', None),
-            data.get('client-name', None), data.get('end-date', None), data.get('end-contract', None),
-            data.get('insurance-paid', None), data.get('rent-fee', None), data.get('maintenance-fee', None),
-            data.get('owner-signature', None), data.get('phone', None), data.get('start-date', None),
-            data.get('monthly-rent', None), data.get('months', None), data.get('total', None),
-            data.get('amount-paid', None), data.get('amount-in-words', None), contract_status,
-            data.get('jeddah-neighborhood', None), data.get('transfer', None)
+            data.get('date'), data.get('contract-number'), data.get('nationality'),
+            data.get('id-number'), data.get('id-type'), data.get('job'), data.get('salary'),
+            data.get('marital-status'), data.get('apartment-number'), data.get('client-name'),
+            data.get('start-date'), data.get('end-contract'), contract_status,
+            data.get('jeddah-neighborhood'), data.get('transfer')
         ))
 
     conn.commit()
@@ -214,27 +188,6 @@ def submit():
 
     pdf_path = generate_pdf(data)
     return send_file(pdf_path, as_attachment=True, download_name="contract.pdf")
-
-@app.route('/view-database', methods=['GET', 'POST'])
-def view_database():
-    conn = get_db_connection()
-    query = None
-    contracts = []
-    if request.method == 'POST':
-        query = request.form.get('search', None)
-        if query:
-            contracts = conn.execute('''
-                SELECT * FROM contracts
-                WHERE 
-                    apartment_number LIKE ? OR
-                    client_name LIKE ? OR
-                    contract_number LIKE ?
-            ''', (f'%{query}%', f'%{query}%', f'%{query}%')).fetchall()
-    else:
-        contracts = conn.execute('SELECT * FROM contracts').fetchall()
-
-    conn.close()
-    return render_template('view_database.html', contracts=contracts, query=query)
 
 @app.route('/')
 def login():
