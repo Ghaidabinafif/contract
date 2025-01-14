@@ -51,6 +51,7 @@ def init_db():
             contract_status TEXT,
             jeddah_neighborhood TEXT,
             transfer TEXT
+            )
     ''')
     conn.commit()
     conn.close()
