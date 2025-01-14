@@ -48,8 +48,9 @@ def init_db():
             total TEXT,
             amount_paid TEXT,
             amount_in_words TEXT,
-            contract_status TEXT
-        )
+            contract_status TEXT,
+            jeddah_neighborhood TEXT,
+            transfer TEXT
     ''')
     conn.commit()
     conn.close()
@@ -275,6 +276,8 @@ def submit():
                 amount_paid = ?,
                 amount_in_words = ?,
                 contract_status = ?
+                jeddah_neighborhood = ?,
+            transfer = ?
             WHERE apartment_number = ?
         ''', (
             data.get('date', None),
@@ -300,6 +303,8 @@ def submit():
             data.get('amount-paid', None),
             data.get('amount-in-words', None),
             contract_status,
+            data.get('jeddah-neighborhood', None),  # إضافة جدة حي
+        data.get('transfer', None),  # إضافة نوع التحويل
             apartment_number
         ))
     else:
@@ -310,7 +315,7 @@ def submit():
                 marital_status, apartment_number, client_name, end_date, end_contract,
                 insurance_paid, rent_fee, maintenance_fee, owner_signature, phone,
                 start_date, monthly_rent, months, total, amount_paid, amount_in_words,
-                contract_status
+                contract_status, jeddah_neighborhood, transfer
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
             data.get('date', None),
@@ -336,7 +341,9 @@ def submit():
             data.get('total', None),
             data.get('amount-paid', None),
             data.get('amount-in-words', None),
-            contract_status
+            contract_status,
+            data.get('jeddah-neighborhood', None),  # إضافة جدة حي
+        data.get('transfer', None)  # إضافة نوع التحويل
         ))
 
     conn.commit()

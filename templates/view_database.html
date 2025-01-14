@@ -33,6 +33,9 @@
                 <th>Start Date</th>
                 <th>End Contract</th>
                 <th>Contract Status</th>
+                <th>Jeddah Neighborhood</th>
+                <th>Transfer</th>
+
             </tr>
         </thead>
         <tbody>
@@ -53,6 +56,9 @@
                     <td>{{ contract['start_date'] }}</td>
                     <td>{{ contract['end_contract'] }}</td>
                     <td>{{ contract['contract_status'] }}</td>
+                    <td>{{ contract['jeddah_neighborhood'] }}</td>
+                    <td>{{ contract['transfer'] }}</td>
+
                 </tr>
                 {% endfor %}
             {% else %}
