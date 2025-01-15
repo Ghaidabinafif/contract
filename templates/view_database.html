@@ -8,12 +8,13 @@
 <body>
     <h1>Contracts Database</h1>
 
-    <!-- نموذج البحث -->
     <form method="POST" action="/view-database">
-        <label for="search">Search:</label>
-        <input type="text" id="search" name="search" placeholder="Enter keyword (e.g., apartment number, client name, etc.)" value="{{ query or '' }}">
-        <button type="submit">Search</button>
+        <label for="search-query">بحث:</label>
+        <input type="text" id="search-query" name="search-query" placeholder="أدخل الاسم أو رقم الشقة أو الحي" value="{{ request.form.get('search-query', '') }}">
+        <button type="submit">بحث</button>
     </form>
+    
+    
 
     <!-- عرض العقود -->
     <table border="1">
@@ -35,7 +36,17 @@
                 <th>Contract Status</th>
                 <th>Jeddah Neighborhood</th>
                 <th>Transfer</th>
-
+                <th>End Date</th>
+                <th>Insurance Paid</th>
+                <th>Rent Fee</th>
+                <th>Maintenance Fee</th>
+                <th>Owner Signature</th>
+                <th>Phone</th>
+                <th>Monthly Rent</th>
+                <th>Months</th>
+                <th>Total</th>
+                <th>Amount Paid</th>
+                <th>Amount in Words</th>
             </tr>
         </thead>
         <tbody>
@@ -58,13 +69,22 @@
                     <td>{{ contract['contract_status'] }}</td>
                     <td>{{ contract['jeddah_neighborhood'] }}</td>
                     <td>{{ contract['transfer'] }}</td>
-
-
+                    <td>{{ contract['end_date'] }}</td>
+                    <td>{{ contract['insurance_paid'] }}</td>
+                    <td>{{ contract['rent_fee'] }}</td>
+                    <td>{{ contract['maintenance_fee'] }}</td>
+                    <td>{{ contract['owner_signature'] }}</td>
+                    <td>{{ contract['phone'] }}</td>
+                    <td>{{ contract['monthly_rent'] }}</td>
+                    <td>{{ contract['months'] }}</td>
+                    <td>{{ contract['total'] }}</td>
+                    <td>{{ contract['amount_paid'] }}</td>
+                    <td>{{ contract['amount_in_words'] }}</td>
                 </tr>
                 {% endfor %}
             {% else %}
                 <tr>
-                    <td colspan="16">No contracts found.</td>
+                    <td colspan="27">No contracts found.</td>
                 </tr>
             {% endif %}
         </tbody>

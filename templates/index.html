@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>عقد الإيجار</title>
     <style>
+
+
         body {
             margin: 0;
             padding: 0;
@@ -279,6 +281,34 @@
             padding: 10px;
         }
 
+        #search-form {
+            position: absolute;
+            top: 2500px; /* تعديل المسافة من الأعلى حسب الحاجة */
+            left: 2200px; /* مكان الفورم */
+            z-index: 20;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+        }
+        
+        #search-form button {
+            position: relative; /* لتثبيت الزر داخل الفورم */
+            left: 0px; /* تحريك الزر إلى أقصى اليسار */
+            top: 10px; /* ضبط المسافة من الأعلى */
+            background-color: #007BFF;
+            color: #fff;
+            padding: 15px 30px; /* زيادة الحشو الداخلي للزر */
+            border: none; /* إزالة الحدود */
+            border-radius: 5px; /* زوايا مستديرة */
+            cursor: pointer; /* مؤشر الضغط */
+            font-size: 18px; /* تكبير حجم النص */
+        }
+
+        #search-form button:hover {
+            background-color: #0056b3;
+        }        
+
         button[type="submit"] {
             position: absolute;
             bottom: 50px;
@@ -295,10 +325,8 @@
 
         button[type="submit"]:hover {
             background-color: #0056b3;
-
-            
         }
-
+        
 
      
         
@@ -306,81 +334,116 @@
 </head>
 <body>
 
+    
+
     <form action="/submit" method="POST">
         <div class="contract">
             <!-- حقول الإدخال -->
-            <input type="date" id="date" name="date" class="input-field">
-            <input type="text" id="contract-number" name="contract-number" class="input-field">
-            <input type="text" id="nationality" name="nationality" class="input-field">
-            <input type="text" id="id-number" name="id-number" class="input-field">
-            <input type="text" id="job" name="job" class="input-field">
-            <input type="text" id="salary" name="salary" class="input-field">
-            <input type="text" id="marital-status" name="marital-status" class="input-field">
+            <input type="date" id="date" name="date" class="input-field"
+                   value="{{ contract['date'] if contract else '' }}">
+            <input type="text" id="contract-number" name="contract-number" class="input-field"
+                   value="{{ contract['contract_number'] if contract else '' }}">
+            <input type="text" id="nationality" name="nationality" class="input-field"
+                   value="{{ contract['nationality'] if contract else '' }}">
+            <input type="text" id="id-number" name="id-number" class="input-field"
+                   value="{{ contract['id_number'] if contract else '' }}">
+            <input type="text" id="job" name="job" class="input-field"
+                   value="{{ contract['job'] if contract else '' }}">
+            <input type="text" id="salary" name="salary" class="input-field"
+                   value="{{ contract['salary'] if contract else '' }}">
+            <input type="text" id="marital-status" name="marital-status" class="input-field"
+                   value="{{ contract['marital_status'] if contract else '' }}">
             <select id="jeddah-neighborhood" name="jeddah-neighborhood" class="input-field">
                 <option value="" disabled selected>اختر الحي</option>
-                <option value="الروابي">الروابي</option>
-                <option value="بني مالك 4">بني مالك 4</option>
+                <option value="الروابي" {% if contract and contract['jeddah_neighborhood'] == 'الروابي' %}selected{% endif %}>الروابي</option>
+                <option value="بني مالك 4" {% if contract and contract['jeddah_neighborhood'] == 'بني مالك 4' %}selected{% endif %}>بني مالك 4</option>
             </select>
-            <input type="text" id="apartment-number" name="apartment-number" class="input-field">
-            <input type="text" id="client-name" name="client-name" class="input-field">
+            <input type="text" id="apartment-number" name="apartment-number" class="input-field"
+                   value="{{ contract['apartment_number'] if contract else '' }}">
+            <input type="text" id="client-name" name="client-name" class="input-field"
+                   value="{{ contract['client_name'] if contract else '' }}">
             <select id="id-type" name="id-type" class="input-field">
                 <option value="" disabled selected>اختر نوع الإثبات</option>
-                <option value="بطاقة أحوال">بطاقة أحوال</option>
-                <option value="هوية مقيم">هوية مقيم</option>
-                <option value="جواز سفر">جواز سفر</option>
+                <option value="بطاقة أحوال" {% if contract and contract['id_type'] == 'بطاقة أحوال' %}selected{% endif %}>بطاقة أحوال</option>
+                <option value="هوية مقيم" {% if contract and contract['id_type'] == 'هوية مقيم' %}selected{% endif %}>هوية مقيم</option>
+                <option value="جواز سفر" {% if contract and contract['id_type'] == 'جواز سفر' %}selected{% endif %}>جواز سفر</option>
             </select>
-            <input type="date" id="end-date" name="end-date" class="input-field">
-            <input type="date" id="end-contract" name="end-contract" class="input-field">
-            <input type="text" id="insurance-paid" name="insurance-paid" class="input-field">
-            <input type="text" id="rent-fee" name="rent-fee" class="input-field">
+            <input type="date" id="end-date" name="end-date" class="input-field"
+                   value="{{ contract['end_date'] if contract else '' }}">
+            <input type="date" id="end-contract" name="end-contract" class="input-field"
+                   value="{{ contract['end_contract'] if contract else '' }}">
+            <input type="text" id="insurance-paid" name="insurance-paid" class="input-field"
+                   value="{{ contract['insurance_paid'] if contract else '' }}">
+            <input type="text" id="rent-fee" name="rent-fee" class="input-field"
+                   value="{{ contract['rent_fee'] if contract else '' }}">
             <select id="maintenance-fee" name="maintenance-fee" class="input-field">
                 <option value="" disabled selected>اختر المسؤول عن النفقة</option>
-                <option value="المالك">المالك</option>
-                <option value="المستأجر">المستأجر</option>
+                <option value="المالك" {% if contract and contract['maintenance_fee'] == 'المالك' %}selected{% endif %}>المالك</option>
+                <option value="المستأجر" {% if contract and contract['maintenance_fee'] == 'المستأجر' %}selected{% endif %}>المستأجر</option>
             </select>
             <select id="owner-signature" name="owner-signature" class="input-field">
                 <option value="" disabled selected>اختر توقيع المالك</option>
-                <option value="عبدالقادر بن عفيف">عبدالقادر بن عفيف</option>
-                <option value="أسماء عبدالقادر">أسماء عبدالقادر</option>
+                <option value="عبدالقادر بن عفيف" {% if contract and contract['owner_signature'] == 'عبدالقادر بن عفيف' %}selected{% endif %}>عبدالقادر بن عفيف</option>
+                <option value="أسماء عبدالقادر" {% if contract and contract['owner_signature'] == 'أسماء عبدالقادر' %}selected{% endif %}>أسماء عبدالقادر</option>
             </select>
-            <input type="text" id="phone" name="phone" class="input-field">
-            <input type="date" id="start-date" name="start-date" class="input-field">
-            <input type="number" id="monthly-rent" name="monthly-rent" class="input-field">
-            <input type="number" id="months" name="months" class="input-field">
-            <input type="text" id="total" name="total" class="input-field" readonly>
-            <input type="number" id="amount-paid" name="amount-paid" class="input-field">
-            <input type="text" id="amount-in-words" name="amount-in-words" class="input-field">
+            <input type="text" id="phone" name="phone" class="input-field"
+                   value="{{ contract['phone'] if contract else '' }}">
+            <input type="date" id="start-date" name="start-date" class="input-field"
+                   value="{{ contract['start_date'] if contract else '' }}">
+            <input type="number" id="monthly-rent" name="monthly-rent" class="input-field"
+                   value="{{ contract['monthly_rent'] if contract else '' }}">
+            <input type="number" id="months" name="months" class="input-field"
+                   value="{{ contract['months'] if contract else '' }}">
+            <input type="text" id="total" name="total" class="input-field" readonly
+                   value="{{ contract['total'] if contract else '' }}">
+            <input type="number" id="amount-paid" name="amount-paid" class="input-field"
+                   value="{{ contract['amount_paid'] if contract else '' }}">
+            <input type="text" id="amount-in-words" name="amount-in-words" class="input-field"
+                   value="{{ contract['amount_in_words'] if contract else '' }}">
             <select id="transfer" name="transfer" class="input-field">
                 <option value="" disabled selected>اختر نوع التحويل</option>
-                <option value="تحويل بنكي">تحويل بنكي</option>
-                <option value="نقدي">نقدي</option>
+                <option value="تحويل بنكي" {% if contract and contract['transfer'] == 'تحويل بنكي' %}selected{% endif %}>تحويل بنكي</option>
+                <option value="نقدي" {% if contract and contract['transfer'] == 'نقدي' %}selected{% endif %}>نقدي</option>
             </select>
-            
-            
-                 
-
             <!-- زر الإرسال -->
             <button type="submit">إرسال</button>
         </div>
     </form>
-
+    
+        
     <script>
-        // الوصول إلى الحقول
+        // حساب الإجمالي بناءً على المدخلات
         const monthlyRentField = document.getElementById('monthly-rent');
         const monthsField = document.getElementById('months');
         const totalField = document.getElementById('total');
 
-        // تحديث الإجمالي تلقائيًا عند تغيير أي من الحقول
         function updateTotal() {
-            const monthlyRent = parseFloat(monthlyRentField.value) || 0; // قيمة الإيجار الشهري
-            const months = parseFloat(monthsField.value) || 0; // عدد الأشهر
-            const total = monthlyRent * months; // حساب الإجمالي
-            totalField.value = total.toFixed(2); // عرض الإجمالي بصيغة عشرية
+            const monthlyRent = parseFloat(monthlyRentField.value) || 0;
+            const months = parseFloat(monthsField.value) || 0;
+            const total = monthlyRent * months;
+            totalField.value = total.toFixed(2);
         }
 
-        // إضافة مستمعي الأحداث لتحديث الإجمالي عند التغيير
         monthlyRentField.addEventListener('input', updateTotal);
         monthsField.addEventListener('input', updateTotal);
     </script>
+
+    <form id="search-form" method="POST" action="/search-contract">
+        {% if error %}
+        <p id="error-message" style="color: red;">{{ error }}</p>
+        {% endif %}
+        <label for="apartment-number">رقم الشقة:</label>
+        <input type="text" id="apartment-number" name="apartment-number" placeholder="أدخل رقم الشقة">
+        <label for="jeddah-neighborhood">الحي:</label>
+        <select id="jeddah-neighborhood" name="jeddah-neighborhood">
+            <option value="" disabled selected>اختر الحي</option>
+            <option value="الروابي">الروابي</option>
+            <option value="بني مالك 4">بني مالك 4</option>
+        </select>
+        <button type="submit">بحث</button>
+    </form>
+    
+
+    
 </body>
 </html>

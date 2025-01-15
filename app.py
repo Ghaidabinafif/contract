@@ -1,5 +1,4 @@
 from flask import Flask, request, render_template, jsonify, redirect, url_for, send_file
-import csv
 from fpdf import FPDF
 import arabic_reshaper
 from bidi.algorithm import get_display
@@ -39,11 +38,21 @@ def init_db():
             end_contract TEXT,
             contract_status TEXT,
             jeddah_neighborhood TEXT,
-            transfer TEXT
+            transfer TEXT,
+            end_date TEXT,
+            insurance_paid TEXT,
+            rent_fee TEXT,
+            maintenance_fee TEXT,
+            owner_signature TEXT,
+            phone TEXT,
+            monthly_rent TEXT,
+            months TEXT,
+            total TEXT,
+            amount_paid TEXT,
+            amount_in_words TEXT
         )
     ''')
     conn.commit()
-    conn.close()
 
 # استدعاء دالة إنشاء قاعدة البيانات عند بدء تشغيل التطبيق
 init_db()
@@ -161,13 +170,20 @@ def submit():
             SET
                 date = ?, contract_number = ?, nationality = ?, id_number = ?, id_type = ?,
                 job = ?, salary = ?, marital_status = ?, client_name = ?, start_date = ?,
-                end_contract = ?, contract_status = ?, jeddah_neighborhood = ?, transfer = ?
+                end_contract = ?, contract_status = ?, jeddah_neighborhood = ?, transfer = ?,
+                end_date = ?, insurance_paid = ?, rent_fee = ?, maintenance_fee = ?, 
+                owner_signature = ?, phone = ?, monthly_rent = ?, months = ?, total = ?, 
+                amount_paid = ?, amount_in_words = ?
             WHERE apartment_number = ? AND jeddah_neighborhood = ?
         ''', (
             data.get('date'), data.get('contract-number'), data.get('nationality'),
             data.get('id-number'), data.get('id-type'), data.get('job'), data.get('salary'),
             data.get('marital-status'), data.get('client-name'), data.get('start-date'),
             data.get('end-contract'), contract_status, jeddah_neighborhood, data.get('transfer'),
+            data.get('end-date'), data.get('insurance-paid'), data.get('rent-fee'),
+            data.get('maintenance-fee'), data.get('owner-signature'), data.get('phone'),
+            data.get('monthly-rent'), data.get('months'), data.get('total'),
+            data.get('amount-paid'), data.get('amount-in-words'),
             apartment_number, jeddah_neighborhood
         ))
     else:
@@ -175,14 +191,20 @@ def submit():
             INSERT INTO contracts (
                 date, contract_number, nationality, id_number, id_type, job, salary,
                 marital_status, apartment_number, client_name, start_date, end_contract,
-                contract_status, jeddah_neighborhood, transfer
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                contract_status, jeddah_neighborhood, transfer, end_date, insurance_paid, 
+                rent_fee, maintenance_fee, owner_signature, phone, monthly_rent, months, 
+                total, amount_paid, amount_in_words
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
             data.get('date'), data.get('contract-number'), data.get('nationality'),
             data.get('id-number'), data.get('id-type'), data.get('job'), data.get('salary'),
             data.get('marital-status'), data.get('apartment-number'), data.get('client-name'),
             data.get('start-date'), data.get('end-contract'), contract_status,
-            jeddah_neighborhood, data.get('transfer')
+            jeddah_neighborhood, data.get('transfer'), data.get('end-date'),
+            data.get('insurance-paid'), data.get('rent-fee'), data.get('maintenance-fee'),
+            data.get('owner-signature'), data.get('phone'), data.get('monthly-rent'),
+            data.get('months'), data.get('total'), data.get('amount-paid'),
+            data.get('amount-in-words')
         ))
 
     conn.commit()
@@ -194,30 +216,24 @@ def submit():
 @app.route('/view-database', methods=['GET', 'POST'])
 def view_database():
     conn = get_db_connection()
-    query = None
-    contracts = []
 
-    # تنفيذ البحث إذا كان هناك استعلام (POST request)
-    if request.method == 'POST':
-        query = request.form.get('search', None)
-        if query:
-            contracts = conn.execute('''
-    SELECT * FROM contracts
-    WHERE 
-        apartment_number LIKE ? OR
-        client_name LIKE ? OR
-        contract_number LIKE ? OR
-        jeddah_neighborhood LIKE ?
-''', (f'%{query}%', f'%{query}%', f'%{query}%', f'%{query}%')).fetchall()
-
-    else:
-        # في حالة عدم وجود استعلام، عرض كل العقود
+    # إذا كان الطلب GET، عرض جميع العقود
+    if request.method == 'GET':
         contracts = conn.execute('SELECT * FROM contracts').fetchall()
+    else:
+        # إذا كان الطلب POST، قم بمعالجة استعلام البحث
+        search_query = request.form.get('search-query')
+        if search_query:
+            contracts = conn.execute('''
+                SELECT * FROM contracts
+                WHERE client_name LIKE ? OR apartment_number LIKE ? OR jeddah_neighborhood LIKE ?
+            ''', (f'%{search_query}%', f'%{search_query}%', f'%{search_query}%')).fetchall()
+        else:
+            contracts = conn.execute('SELECT * FROM contracts').fetchall()
 
     conn.close()
-    
-    # إعادة الصفحة مع إرسال البيانات
-    return render_template('view_database.html', contracts=contracts, query=query)
+    return render_template('view_database.html', contracts=contracts)
+
 
 @app.route('/')
 def login():
@@ -241,5 +257,33 @@ def check_password():
 def contract_page():
     return render_template('index.html')
 
+
+
+@app.route('/search-contract', methods=['POST'])
+def search_contract():
+    apartment_number = request.form.get('apartment-number')
+    jeddah_neighborhood = request.form.get('jeddah-neighborhood')
+
+    # التحقق من الإدخالات
+    if not apartment_number or not jeddah_neighborhood:
+        return render_template('index.html', error="يرجى إدخال رقم الشقة والحي للبحث.")
+
+    # البحث عن العقد
+    conn = get_db_connection()
+    contract = conn.execute('''
+        SELECT * FROM contracts
+        WHERE apartment_number = ? AND jeddah_neighborhood = ?
+    ''', (apartment_number, jeddah_neighborhood)).fetchone()
+    conn.close()
+
+    # التحقق من نتيجة البحث
+    if contract:
+        return render_template('index.html', contract=contract)
+    else:
+        return render_template('index.html', error="لم يتم العثور على عقد مطابق.")
+
+    
+    
+    
 if __name__ == '__main__':
     app.run(debug=True)
