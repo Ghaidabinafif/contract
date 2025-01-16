@@ -4,9 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>عقد الإيجار</title>
+
+
+    
     <style>
-
-
         body {
             margin: 0;
             padding: 0;
@@ -14,7 +15,7 @@
             direction: rtl;
             background-color: #ffffff;
         }
-
+    
         /* إعدادات الصورة كخلفية */
         .contract {
             position: relative;
@@ -24,7 +25,7 @@
             background-size: cover; /* لضمان أن الصورة تغطي الحاوية بالكامل */
             margin: auto; /* لمحاذاة الصورة في الوسط */
         }
-
+    
         /* إعدادات الحقول */
         .input-field {
             position: absolute; /* لتثبيت الحقول فوق الصورة */
@@ -34,9 +35,9 @@
             padding: 5px;
             box-sizing: border-box;
         }
-
+    
         /* إعدادات حقل التاريخ */
-        #date, #end-date, #start-date, #end-contract{
+        #date, #end-date, #start-date, #end-contract {
             top: 484px; /* المسافة من أعلى الصورة */
             left: 2521px; /* المسافة من يسار الصورة */
             width: 442px; /* عرض الحقل */
@@ -44,7 +45,7 @@
             text-align: center;
             font-size: 45px;
         }
-
+    
         /* إعدادات حقل رقم العقد */
         #contract-number {
             top: 484px;
@@ -54,7 +55,7 @@
             font-size: 35px;
             padding: 10px;
         }
-
+    
         /* إعدادات حقل الجنسية */
         #nationality {
             top: 671px;
@@ -64,7 +65,7 @@
             font-size: 35px;
             padding: 10px;
         }
-
+    
         /* إعدادات حقل رقم الإثبات */
         #id-number {
             top: 791px;
@@ -74,7 +75,7 @@
             font-size: 35px;
             padding: 10px;
         }
-
+    
         /* إعدادات حقل العمل */
         #job {
             top: 912px;
@@ -84,16 +85,16 @@
             font-size: 35px;
             padding: 10px;
         }
-
-         /* إعدادات حقل تاريخ الإنتهاء  */
-         #end-date {
+    
+        /* إعدادات حقل تاريخ الإنتهاء */
+        #end-date {
             top: 911px;
             left: 1697px;
             width: 1207px; /* العرض */
             height: 94px; /* الارتفاع */
             padding: 10px;
         }
-
+    
         /* إعدادات حقل الراتب */
         #salary {
             top: 1032px;
@@ -103,7 +104,7 @@
             font-size: 35px;
             padding: 10px;
         }
-
+    
         /* إعدادات حقل الحالة الاجتماعية */
         #marital-status {
             top: 1032px;
@@ -113,7 +114,7 @@
             font-size: 35px;
             padding: 10px;
         }
-
+    
         /* إعدادات حقل جدة حي */
         #jeddah-neighborhood {
             top: 1273px; /* موقع حقل جدة حي */
@@ -123,7 +124,7 @@
             font-size: 35px;
             padding: 10px;
         }
-
+    
         /* إعدادات حقل اسم العميل */
         #client-name {
             top: 671px;
@@ -133,7 +134,7 @@
             font-size: 35px;
             padding: 10px;
         }
-
+    
         /* إعدادات حقل نوع الإثبات */
         #id-type {
             top: 791px;
@@ -143,25 +144,25 @@
             font-size: 35px;
             padding: 10px;
         }
-
+    
         /* إعدادات حقل نهاية العقد */
         #end-contract {
-            top: 1154px; 
+            top: 1154px;
             left: 161px;
             width: 1030px;
             height: 94px;
         }
-
+    
         /* إعدادات حقل شقة رقم */
         #apartment-number {
-            top: 1393px; 
+            top: 1393px;
             left: 161px;
             width: 1030px;
             height: 94px;
             font-size: 35px;
             padding: 10px;
         }
-
+    
         /* إعدادات حقل التأمين المدفوع */
         #insurance-paid {
             top: 1514px; /* المسافة من أعلى الصورة */
@@ -171,7 +172,7 @@
             font-size: 35px;
             padding: 10px;
         }
-
+    
         /* إعدادات حقل أجرة */
         #rent-fee {
             top: 2018px; /* المسافة من أعلى الصورة */
@@ -181,7 +182,7 @@
             font-size: 35px;
             padding: 10px;
         }
-
+    
         /* إعدادات حقل نفقة */
         #maintenance-fee {
             top: 2193px; /* المسافة من أعلى الصورة */
@@ -191,7 +192,7 @@
             font-size: 35px;
             padding: 10px;
         }
-
+    
         /* إعدادات حقل توقيع المالك */
         #owner-signature {
             top: 2346px; /* المسافة من أعلى الصورة */
@@ -201,7 +202,7 @@
             font-size: 35px;
             padding: 10px;
         }
-
+    
         /* إعدادات حقل الجوال */
         #phone {
             top: 1032px;
@@ -211,7 +212,7 @@
             font-size: 35px;
             padding: 10px;
         }
-
+    
         /* إعدادات حقل بداية العقد */
         #start-date {
             top: 1151px;
@@ -219,7 +220,7 @@
             width: 1207px;
             height: 94px;
         }
-
+    
         /* إعدادات حقل الإيجار الشهري */
         #monthly-rent {
             top: 1273px;
@@ -229,7 +230,7 @@
             font-size: 35px;
             padding: 10px;
         }
-
+    
         /* إعدادات حقل عدد الأشهر */
         #months {
             top: 1393px;
@@ -239,7 +240,7 @@
             font-size: 35px;
             padding: 10px;
         }
-
+    
         /* إعدادات حقل الإجمالي */
         #total {
             top: 1514px;
@@ -251,7 +252,7 @@
             background-color: rgba(230, 230, 230, 0.8); /* لجعل الحقل مميز */
             pointer-events: none; /* لمنع المستخدم من التعديل عليه */
         }
-
+    
         /* إعدادات حقل المبلغ المدفوع */
         #amount-paid {
             top: 1633px;
@@ -261,7 +262,7 @@
             font-size: 35px;
             padding: 10px;
         }
-
+    
         /* إعدادات حقل "مبلغا وقدره" الجديد */
         #amount-in-words {
             top: 1633px;
@@ -271,7 +272,7 @@
             font-size: 35px;
             padding: 10px;
         }
-
+    
         #transfer {
             top: 1633px;
             left: 395px;
@@ -280,10 +281,10 @@
             font-size: 35px;
             padding: 10px;
         }
-
+    
         #search-form {
             position: absolute;
-            top: 2500px; /* تعديل المسافة من الأعلى حسب الحاجة */
+            top: 200px; /* تعديل المسافة من الأعلى حسب الحاجة */
             left: 2200px; /* مكان الفورم */
             z-index: 20;
             background-color: rgba(255, 255, 255, 0.9);
@@ -293,22 +294,22 @@
         }
         
         #search-form button {
-            position: relative; /* لتثبيت الزر داخل الفورم */
-            left: 0px; /* تحريك الزر إلى أقصى اليسار */
-            top: 10px; /* ضبط المسافة من الأعلى */
+            position: relative;
+            left: 0px;
+            top: 10px;
             background-color: #007BFF;
             color: #fff;
-            padding: 15px 30px; /* زيادة الحشو الداخلي للزر */
-            border: none; /* إزالة الحدود */
-            border-radius: 5px; /* زوايا مستديرة */
-            cursor: pointer; /* مؤشر الضغط */
-            font-size: 18px; /* تكبير حجم النص */
+            padding: 15px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 18px;
         }
-
+    
         #search-form button:hover {
             background-color: #0056b3;
         }        
-
+    
         button[type="submit"] {
             position: absolute;
             bottom: 50px;
@@ -322,29 +323,52 @@
             cursor: pointer;
             border-radius: 5px;
         }
-
+    
         button[type="submit"]:hover {
             background-color: #0056b3;
         }
-        
-
+    
+        /* التصميم المتجاوب */
         @media (max-width: 768px) {
-            #search-form {
-                flex-direction: column; /* جعل العناصر عمودية */
-                align-items: center;
+            .contract {
+                width: 100%;
+                height: auto;
+                background-size: contain;
             }
-        
-            #search-form input,
-            #search-form select,
-            #search-form button {
-                width: 100%; /* الحقول تمتد لعرض الشاشة */
-                margin-bottom: 10px;
+    
+            .input-field {
+                font-size: 14px;
+                width: 90%;
+                left: 5%;
+                padding: 5px;
+            }
+    
+            button[type="submit"] {
+                font-size: 20px;
+                padding: 20px;
             }
         }
-        
-     
-        
+    
+        @media (max-width: 480px) {
+            .contract {
+                width: 100%;
+                height: auto;
+            }
+    
+            .input-field {
+                font-size: 12px;
+                width: 95%;
+                left: 2.5%;
+                padding: 5px;
+            }
+    
+            button[type="submit"] {
+                font-size: 16px;
+                padding: 15px;
+            }
+        }
     </style>
+    
 </head>
 <body>
 
@@ -365,8 +389,13 @@
                    value="{{ contract['job'] if contract else '' }}">
             <input type="text" id="salary" name="salary" class="input-field"
                    value="{{ contract['salary'] if contract else '' }}">
-            <input type="text" id="marital-status" name="marital-status" class="input-field"
-                   value="{{ contract['marital_status'] if contract else '' }}">
+                   <select id="marital-status" name="marital-status" class="input-field">
+                    <option value="" disabled selected>اختر الحالة الاجتماعية</option>
+                    <option value="أعزب" {% if contract and contract['marital_status'] == 'أعزب' %}selected{% endif %}>أعزب</option>
+                    <option value="متزوج" {% if contract and contract['marital_status'] == 'متزوج' %}selected{% endif %}>متزوج</option>
+                    <option value="مطلق" {% if contract and contract['marital_status'] == 'مطلق' %}selected{% endif %}>مطلق</option>
+                    <option value="أرمل" {% if contract and contract['marital_status'] == 'أرمل' %}selected{% endif %}>أرمل</option>
+                </select>                
             <select id="jeddah-neighborhood" name="jeddah-neighborhood" class="input-field">
                 <option value="" disabled selected>اختر الحي</option>
                 <option value="الروابي" {% if contract and contract['jeddah_neighborhood'] == 'الروابي' %}selected{% endif %}>الروابي</option>
