@@ -98,7 +98,7 @@ def contract_status():
 def generate_pdf(data):
     pdf = FPDF(unit='mm', format=(914.4, 685.8))
     pdf.add_page()
-    pdf.image('static/contract_new.jpg', x=0, y=0, w=914.4, h=685.8)
+    pdf.image('static/contract.png', x=0, y=0, w=914.4, h=685.8)
     pdf.add_font('Amiri', '', 'static/Amiri-Regular.ttf', uni=True)
     pdf.set_font('Amiri', '', 35)
 
@@ -132,11 +132,11 @@ def generate_pdf(data):
     add_text(50, 320, 300, 30, data.get('end-contract', ''))
     add_text(50, 385, 300, 30, data.get('apartment-number', ''))
     add_text(50, 420, 300, 30, data.get('insurance-paid', ''))
-    add_text(480, 550, 100, 30, data.get('rent-fee', ''))
-    add_text(630, 600, 150, 30, data.get('maintenance-fee', ''))
+    add_text(450, 550, 100, 30, data.get('rent-fee', ''))
+    add_text(600, 600, 150, 30, data.get('maintenance-fee', ''))
     add_text(620, 450, 150, 30, data.get('amount-paid', ''))
     add_text(120, 450, 450, 30, data.get('amount-in-words', ''))
-    add_text(690, 630, 150, 30, data.get('owner-signature', ''))
+    add_text(690, 635, 150, 30, data.get('owner-signature', ''))
     add_text(450, 280, 350, 30, data.get('phone', ''))
     add_text(450, 320, 350, 30, data.get('start-date', ''))
     add_text(450, 350, 350, 30, data.get('monthly-rent', ''))
