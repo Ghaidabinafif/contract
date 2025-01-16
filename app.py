@@ -143,7 +143,9 @@ def generate_pdf(data):
     add_text(450, 385, 350, 30, data.get('months', ''))
     add_text(450, 420, 350, 30, data.get('total', ''))
 
-    pdf_path = f"static/contract_{data.get('contract-number', 'unknown')}.pdf"
+    apartment_number = data.get('apartment-number', 'unknown')
+    contract_date = data.get('date', 'unknown')
+    pdf_path = f"static/{apartment_number}_{contract_date}.pdf"
     pdf.output(pdf_path)
     return pdf_path
 
@@ -211,7 +213,7 @@ def submit():
     conn.close()
 
     pdf_path = generate_pdf(data)
-    return send_file(pdf_path, as_attachment=True, download_name="contract.pdf")
+    return send_file(pdf_path, as_attachment=True, download_name=pdf_path.split('/')[-1])
 
 @app.route('/view-database', methods=['GET', 'POST'])
 def view_database():

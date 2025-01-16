@@ -21,7 +21,7 @@
             position: relative;
             width: 3508px; /* عرض الصورة */
             height: 2480px; /* ارتفاع الصورة */
-            background: url('/static/contract_new.jpg') no-repeat center;
+            background: url('/static/contract.png') no-repeat center;
             background-size: cover; /* لضمان أن الصورة تغطي الحاوية بالكامل */
             margin: auto; /* لمحاذاة الصورة في الوسط */
         }
@@ -485,7 +485,81 @@
         <button type="submit">بحث</button>
     </form>
     
-
+    <script>
+        function convertNumberToArabicWords(number) {
+            const arabicNumbers = [
+                '', 'واحد', 'اثنان', 'ثلاثة', 'أربعة', 'خمسة', 'ستة', 'سبعة', 'ثمانية', 'تسعة', 'عشرة',
+                'أحد عشر', 'اثنا عشر', 'ثلاثة عشر', 'أربعة عشر', 'خمسة عشر', 'ستة عشر', 'سبعة عشر', 'ثمانية عشر', 'تسعة عشر', 'عشرون'
+            ];
+            const tens = ['', '', 'عشرون', 'ثلاثون', 'أربعون', 'خمسون', 'ستون', 'سبعون', 'ثمانون', 'تسعون'];
+            const hundreds = ['', 'مئة', 'مئتان', 'ثلاثمئة', 'أربعمئة', 'خمسمئة', 'ستمئة', 'سبعمئة', 'ثمانمئة', 'تسعمئة'];
+        
+            if (number === 0) return 'صفر ريال';
+        
+            let words = '';
+            let num = parseInt(number);
+        
+            // التعامل مع الألوف
+            if (num >= 1000) {
+                const thousands = Math.floor(num / 1000);
+                if (thousands === 1) {
+                    words += 'ألف';
+                } else if (thousands === 2) {
+                    words += 'ألفان';
+                } else if (thousands <= 10) {
+                    words += arabicNumbers[thousands] + ' آلاف';
+                } else {
+                    words += convertNumberToArabicWords(thousands) + ' ألف';
+                }
+                num %= 1000;
+        
+                // إضافة "و" إذا تبقى مئات أو أقل
+                if (num > 0) {
+                    words += ' و';
+                }
+            }
+        
+            // المئات
+            if (num >= 100) {
+                words += hundreds[Math.floor(num / 100)];
+                num %= 100;
+        
+                // إضافة "و" إذا تبقى عشرات أو وحدات
+                if (num > 0) {
+                    words += ' و';
+                }
+            }
+        
+            // العشرات
+            if (num >= 20) {
+                words += tens[Math.floor(num / 10)];
+                num %= 10;
+        
+                // إضافة "و" إذا تبقى وحدات
+                if (num > 0) {
+                    words += ' و';
+                }
+            }
+        
+            // الوحدات
+            if (num > 0) {
+                words += arabicNumbers[num];
+            }
+        
+            // إضافة "ريالًا" مع التنوين
+            return words.trim() + ' ريال';
+        }
+        
+        // تحديث حقل "مبلغ وقدره"
+        const amountPaidField = document.getElementById('amount-paid');
+        const amountInWordsField = document.getElementById('amount-in-words');
+        
+        amountPaidField.addEventListener('input', function () {
+            const amount = parseFloat(amountPaidField.value) || 0;
+            amountInWordsField.value = convertNumberToArabicWords(amount);
+        });
+        
+    </script>
     
 </body>
 </html>
