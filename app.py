@@ -228,8 +228,11 @@ def view_database():
         if search_query:
             contracts = conn.execute('''
                 SELECT * FROM contracts
-                WHERE client_name LIKE ? OR apartment_number LIKE ? OR jeddah_neighborhood LIKE ?
-            ''', (f'%{search_query}%', f'%{search_query}%', f'%{search_query}%')).fetchall()
+                WHERE client_name LIKE ? 
+                OR apartment_number LIKE ? 
+                OR jeddah_neighborhood LIKE ? 
+                OR contract_status LIKE ?
+            ''', (f'%{search_query}%', f'%{search_query}%', f'%{search_query}%', f'%{search_query}%')).fetchall()
         else:
             contracts = conn.execute('SELECT * FROM contracts').fetchall()
 
@@ -289,3 +292,5 @@ def search_contract():
     
 if __name__ == '__main__':
     app.run(debug=True)
+
+
