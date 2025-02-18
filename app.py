@@ -1,20 +1,21 @@
+import psycopg2
+import os
 from flask import Flask, request, render_template, jsonify, redirect, url_for, send_file
 from fpdf import FPDF
 import arabic_reshaper
 from bidi.algorithm import get_display
 import qrcode
 from datetime import datetime
-import sqlite3  # لإضافة قاعدة البيانات
 
 app = Flask(__name__)
 
 PASSWORD = "asmaa"
-DB_FILE = 'contracts.db'  # اسم ملف قاعدة البيانات
 
-# إنشاء اتصال بقاعدة البيانات
+# رابط قاعدة البيانات الذي تحصل عليه من Render
+DATABASE_URL = os.getenv("DATABASE_URL")  # قمنا بتحديد الرابط من البيئة
+
 def get_db_connection():
-    conn = sqlite3.connect(DB_FILE)
-    conn.row_factory = sqlite3.Row
+    conn = psycopg2.connect(DATABASE_URL, sslmode='require')  # هذا هو الاتصال بقاعدة البيانات PostgreSQL
     return conn
 
 # إنشاء جدول العقود إذا لم يكن موجودًا
