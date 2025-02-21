@@ -9,7 +9,7 @@ import sqlite3
 app = Flask(__name__)
 
 PASSWORD = "asmaa"
-DB_FILE = 'contracts.db'  # اسم ملف قاعدة البيانات
+DB_FILE = 'contracts.db'
 
 # إنشاء اتصال بقاعدة البيانات
 def get_db_connection():
@@ -55,147 +55,68 @@ def init_db():
     conn.commit()
     conn.close()
 
-# استدعاء دالة إنشاء قاعدة البيانات عند بدء تشغيل التطبيق
 init_db()
-
-def get_contract_status(start_date, end_contract):
-    today = datetime.now().date()
-    start = datetime.strptime(start_date, '%Y-%m-%d').date() if start_date else None
-    end = datetime.strptime(end_contract, '%Y-%m-%d').date() if end_contract else None
-
-    if start and end:
-        if today < start:
-            return "لم يبدأ"
-        elif start <= today <= end:
-            return "فعال"
-        else:
-            return "منتهي"
-    return "غير معروف"
-
-@app.route('/submit', methods=['POST'])
-def submit():
-    data = request.form.to_dict()
-    contract_status = get_contract_status(data.get('start-date'), data.get('end-contract'))
-    data['contract-status'] = contract_status
-
-    # توليد رقم العقد تلقائيًا
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT MAX(id) FROM contracts")
-    last_contract_id = cursor.fetchone()[0]
-
-    # التأكد من أن last_contract_id ليس None
-    if last_contract_id is None:
-        new_contract_number = "0001"
-    else:
-        new_contract_number = str(last_contract_id + 1).zfill(4)
-
-    data['contract-number'] = new_contract_number
-
-    apartment_number = data.get('apartment-number')
-    jeddah_neighborhood = data.get('jeddah-neighborhood')
-
-    existing_contract = cursor.execute(
-        'SELECT * FROM contracts WHERE apartment_number = ? AND jeddah_neighborhood = ?',
-        (apartment_number, jeddah_neighborhood)
-    ).fetchone()
-
-    if existing_contract:
-        cursor.execute(''' 
-            UPDATE contracts
-            SET
-                date = ?, contract_number = ?, nationality = ?, id_number = ?, id_type = ?,
-                job = ?, salary = ?, marital_status = ?, client_name = ?, start_date = ?,
-                end_contract = ?, contract_status = ?, jeddah_neighborhood = ?, transfer = ?,
-                end_date = ?, insurance_paid = ?, rent_fee = ?, maintenance_fee = ?, 
-                owner_signature = ?, phone = ?, monthly_rent = ?, months = ?, total = ?, 
-                amount_paid = ?, amount_in_words = ?
-            WHERE apartment_number = ? AND jeddah_neighborhood = ?
-        ''', (
-            data.get('date'), new_contract_number, data.get('nationality'),
-            data.get('id-number'), data.get('id-type'), data.get('job'), data.get('salary'),
-            data.get('marital-status'), data.get('client-name'), data.get('start-date'),
-            data.get('end-contract'), contract_status, jeddah_neighborhood, data.get('transfer'),
-            data.get('end-date'), data.get('insurance-paid'), data.get('rent-fee'),
-            data.get('maintenance-fee'), data.get('owner-signature'), data.get('phone'),
-            data.get('monthly-rent'), data.get('months'), data.get('total'),
-            data.get('amount-paid'), data.get('amount-in-words'),
-            apartment_number, jeddah_neighborhood
-        ))
-    else:
-        cursor.execute(''' 
-            INSERT INTO contracts (
-                date, contract_number, nationality, id_number, id_type, job, salary,
-                marital_status, apartment_number, client_name, start_date, end_contract,
-                contract_status, jeddah_neighborhood, transfer, end_date, insurance_paid, 
-                rent_fee, maintenance_fee, owner_signature, phone, monthly_rent, months, 
-                total, amount_paid, amount_in_words
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (
-            data.get('date'), new_contract_number, data.get('nationality'),
-            data.get('id-number'), data.get('id-type'), data.get('job'), data.get('salary'),
-            data.get('marital-status'), data.get('apartment-number'), data.get('client-name'),
-            data.get('start-date'), data.get('end-contract'), contract_status,
-            jeddah_neighborhood, data.get('transfer'), data.get('end-date'),
-            data.get('insurance-paid'), data.get('rent-fee'), data.get('maintenance-fee'),
-            data.get('owner-signature'), data.get('phone'), data.get('monthly-rent'),
-            data.get('months'), data.get('total'), data.get('amount-paid'),
-            data.get('amount-in-words')
-        ))
-
-    conn.commit()
-    conn.close()
-
-    return redirect(url_for('view_database'))
-
-@app.route('/delete-contract', methods=['POST'])
-def delete_contract():
-    contract_id = request.form.get('contract_id')
-
-    if not contract_id:
-        return "لم يتم تحديد العقد المطلوب حذفه.", 400
-
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    cursor.execute('DELETE FROM contracts WHERE id = ?', (contract_id,))
-    conn.commit()
-    conn.close()
-
-    return redirect(url_for('view_database'))
-
-@app.route('/view-database', methods=['GET', 'POST'])
-def view_database():
-    conn = get_db_connection()
-    if request.method == 'POST':
-        search_query = request.form.get('search-query')
-        contracts = conn.execute('''
-            SELECT * FROM contracts
-            WHERE client_name LIKE ? 
-            OR apartment_number LIKE ? 
-            OR jeddah_neighborhood LIKE ? 
-            OR contract_status LIKE ?
-        ''', (f'%{search_query}%', f'%{search_query}%', f'%{search_query}%', f'%{search_query}%')).fetchall()
-    else:
-        contracts = conn.execute('SELECT * FROM contracts').fetchall()
-
-    conn.close()
-    return render_template('view_database.html', contracts=contracts)
 
 @app.route('/')
 def login():
-    return render_template('login.html')
+    return '''
+        <form method="POST" action="/check-password">
+            <label for="password">ادخل كلمة المرور:</label>
+            <input type="password" id="password" name="password">
+            <button type="submit">تسجيل الدخول</button>
+        </form>
+    '''
 
 @app.route('/check-password', methods=['POST'])
 def check_password():
     password = request.form.get('password')
     if password == PASSWORD:
+        return redirect(url_for('contract_page'))
+    else:
+        return "كلمة المرور غير صحيحة! حاول مرة أخرى."
+
+@app.route('/contract-page')
+def contract_page():
+    return render_template('index.html')
+
+@app.route('/view-database', methods=['GET', 'POST'])
+def view_database():
+    conn = get_db_connection()
+    if request.method == 'GET':
+        contracts = conn.execute('SELECT * FROM contracts').fetchall()
+    else:
+        search_query = request.form.get('search-query')
+        if search_query:
+            contracts = conn.execute('''
+                SELECT * FROM contracts
+                WHERE client_name LIKE ? 
+                OR apartment_number LIKE ? 
+                OR jeddah_neighborhood LIKE ? 
+                OR contract_status LIKE ?
+            ''', (f'%{search_query}%', f'%{search_query}%', f'%{search_query}%', f'%{search_query}%')).fetchall()
+        else:
+            contracts = conn.execute('SELECT * FROM contracts').fetchall()
+    
+    conn.close()
+    return render_template('view_database.html', contracts=contracts)
+
+@app.route('/delete-contract', methods=['POST'])
+def delete_contract():
+    contract_id = request.form.get('contract_id')
+    if contract_id:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute('DELETE FROM contracts WHERE id = ?', (contract_id,))
+        conn.commit()
+        conn.close()
         return redirect(url_for('view_database'))
-    return "كلمة المرور غير صحيحة! حاول مرة أخرى."
+    else:
+        return "خطأ: لم يتم تحديد عقد للحذف.", 400
 
 if __name__ == '__main__':
     app.run(debug=True)
 
+    
 #####################################################
 
 """from flask import Flask, request, render_template, redirect, url_for, send_file
