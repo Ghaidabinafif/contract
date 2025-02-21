@@ -1,7 +1,3 @@
-مشاركة
-
-
-أنت قلت:
 from flask import Flask, request, render_template, jsonify, redirect, url_for, send_file
 from fpdf import FPDF
 import arabic_reshaper
