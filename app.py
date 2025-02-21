@@ -1,3 +1,4 @@
+
 from flask import Flask, request, render_template, jsonify, redirect, url_for, send_file
 from fpdf import FPDF
 import arabic_reshaper
@@ -104,9 +105,6 @@ def generate_pdf(data):
     # تعيين حجم الخط العادي لبقية البيانات
     pdf.set_font('Amiri', '', 35)
 
-    # إضافة اللون الأحمر لرقم العقد فقط
-    pdf.set_text_color(255, 0, 0)  # اللون الأحمر (RGB)
-
     base_url = "https://contract-8duk.onrender.com/contract-status"
     contract_number = data.get('contract-number', '').zfill(4)  # التأكد من أن الرقم مكون من 4 أرقام
     qr_data = f"{base_url}?contract_number={contract_number}"
@@ -119,16 +117,16 @@ def generate_pdf(data):
 
     pdf.image(qr_image_path, x=50, y=530, w=100)
 
-    def add_text(x, y, width, height, text, align='C'):
+    def add_text(x, y, width, height, text, align='C', color=(0, 0, 0)):
+        pdf.set_text_color(*color)  # تحديد اللون
         pdf.set_xy(x, y)
         pdf.cell(width, height, prepare_arabic_text(text), border=0, align=align)
 
     # طباعة رقم العقد باللون الأحمر وزيادة حجم الخط له
     pdf.set_font('Amiri', '', 50)  # زيادة حجم الخط لرقم العقد فقط
-    add_text(300, 130, 100, 30, contract_number)  # طباعة رقم العقد باللون الأحمر ومحاذاته لليمين
+    add_text(300, 130, 100, 30, contract_number, color=(255, 0, 0))  # طباعة رقم العقد باللون الأحمر
 
     # تعيين اللون الأسود لبقية البيانات
-    pdf.set_text_color(0, 0, 0)  # تعيين اللون الأسود لبقية النصوص
     pdf.set_font('Amiri', '', 35)  # إعادة حجم الخط لبقية البيانات إلى الحجم العادي
 
     # إضافة بقية الحقول بنفس الطريقة
@@ -149,7 +147,11 @@ def generate_pdf(data):
     add_text(600, 600, 150, 30, data.get('maintenance-fee', ''))
     add_text(620, 450, 150, 30, data.get('amount-paid', ''))
     add_text(120, 450, 450, 30, data.get('amount-in-words', ''))
-    add_text(690, 635, 150, 30, data.get('owner-signature', ''))
+    
+    # تعيين اللون الأزرق الغامق لتوقيع المالك
+    add_text(690, 635, 150, 30, data.get('owner-signature', ''), color=(0, 0, 139))
+
+    # استكمال بقية الحقول
     add_text(450, 280, 350, 30, data.get('phone', ''))
     add_text(450, 320, 350, 30, data.get('start-date', ''))
     add_text(450, 350, 350, 30, data.get('monthly-rent', ''))
@@ -161,6 +163,7 @@ def generate_pdf(data):
     pdf_path = f"static/{apartment_number}_{contract_date}.pdf"
     pdf.output(pdf_path)
     return pdf_path
+
 
 @app.route('/submit', methods=['POST'])
 def submit():
