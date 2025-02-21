@@ -4,49 +4,83 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contracts Database</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            direction: rtl;
+            text-align: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        button {
+            background-color: red;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: darkred;
+        }
+        form {
+            display: inline;
+        }
+    </style>
 </head>
 <body>
-    <h1>Contracts Database</h1>
+    <h1>قاعدة بيانات العقود</h1>
 
+    <!-- نموذج البحث -->
     <form method="POST" action="/view-database">
         <label for="search-query">بحث:</label>
         <input type="text" id="search-query" name="search-query" placeholder="أدخل الاسم أو رقم الشقة أو الحي" value="{{ request.form.get('search-query', '') }}">
         <button type="submit">بحث</button>
     </form>
-    
-    
 
     <!-- عرض العقود -->
-    <table border="1">
+    <table>
         <thead>
             <tr>
                 <th>ID</th>
-                <th>Date</th>
-                <th>Contract Number</th>
-                <th>Nationality</th>
-                <th>ID Number</th>
-                <th>ID Type</th>
-                <th>Job</th>
-                <th>Salary</th>
-                <th>Marital Status</th>
-                <th>Apartment Number</th>
-                <th>Client Name</th>
-                <th>Start Date</th>
-                <th>End Contract</th>
-                <th>Contract Status</th>
-                <th>Jeddah Neighborhood</th>
-                <th>Transfer</th>
-                <th>End Date</th>
-                <th>Insurance Paid</th>
-                <th>Rent Fee</th>
-                <th>Maintenance Fee</th>
-                <th>Owner Signature</th>
-                <th>Phone</th>
-                <th>Monthly Rent</th>
-                <th>Months</th>
-                <th>Total</th>
-                <th>Amount Paid</th>
-                <th>Amount in Words</th>
+                <th>تاريخ</th>
+                <th>رقم العقد</th>
+                <th>الجنسية</th>
+                <th>رقم الهوية</th>
+                <th>نوع الهوية</th>
+                <th>الوظيفة</th>
+                <th>الراتب</th>
+                <th>الحالة الاجتماعية</th>
+                <th>رقم الشقة</th>
+                <th>اسم العميل</th>
+                <th>تاريخ البدء</th>
+                <th>نهاية العقد</th>
+                <th>حالة العقد</th>
+                <th>الحي</th>
+                <th>نوع التحويل</th>
+                <th>تاريخ الانتهاء</th>
+                <th>التأمين المدفوع</th>
+                <th>أجرة</th>
+                <th>نفقة</th>
+                <th>توقيع المالك</th>
+                <th>الهاتف</th>
+                <th>الإيجار الشهري</th>
+                <th>عدد الأشهر</th>
+                <th>الإجمالي</th>
+                <th>المبلغ المدفوع</th>
+                <th>المبلغ كتابةً</th>
+                <th>إجراءات</th> <!-- إضافة عمود للحذف -->
             </tr>
         </thead>
         <tbody>
@@ -80,11 +114,18 @@
                     <td>{{ contract['total'] }}</td>
                     <td>{{ contract['amount_paid'] }}</td>
                     <td>{{ contract['amount_in_words'] }}</td>
+                    <td>
+                        <!-- نموذج حذف العقد -->
+                        <form action="/delete-contract" method="POST" onsubmit="return confirm('هل أنت متأكد من حذف هذا العقد؟');">
+                            <input type="hidden" name="contract_id" value="{{ contract['id'] }}">
+                            <button type="submit">حذف</button>
+                        </form>
+                    </td>
                 </tr>
                 {% endfor %}
             {% else %}
                 <tr>
-                    <td colspan="27">No contracts found.</td>
+                    <td colspan="28">لم يتم العثور على عقود.</td>
                 </tr>
             {% endif %}
         </tbody>

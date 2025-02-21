@@ -280,6 +280,23 @@ def check_password():
 def contract_page():
     return render_template('index.html')
 
+@app.route('/delete-contract', methods=['POST'])
+def delete_contract():
+    contract_id = request.form.get('contract_id')
+
+    if not contract_id:
+        return "لم يتم تحديد العقد المطلوب حذفه.", 400
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    # حذف العقد من قاعدة البيانات
+    cursor.execute('DELETE FROM contracts WHERE id = ?', (contract_id,))
+    conn.commit()
+    conn.close()
+
+    return redirect(url_for('view_database'))  # إعادة توجيه المستخدم إلى صفحة عرض العقود بعد الحذف
+
 @app.route('/search-contract', methods=['POST'])
 def search_contract():
     apartment_number = request.form.get('apartment-number')
