@@ -1,4 +1,3 @@
-
 from flask import Flask, request, render_template, jsonify, redirect, url_for, send_file
 from fpdf import FPDF
 import arabic_reshaper
@@ -164,7 +163,6 @@ def generate_pdf(data):
     pdf.output(pdf_path)
     return pdf_path
 
-
 @app.route('/submit', methods=['POST'])
 def submit():
     data = request.form.to_dict()
@@ -176,7 +174,7 @@ def submit():
     cursor = conn.cursor()
     cursor.execute("SELECT MAX(id) FROM contracts")
     last_contract_id = cursor.fetchone()[0]
-    new_contract_number = str(last_contract_id + 1).zfill(4)  # توليد رقم العقد بـ 4 أرقام
+    new_contract_number = str((last_contract_id if last_contract_id is not None else 0) + 1).zfill(4)
 
     data['contract-number'] = new_contract_number
 
@@ -283,6 +281,31 @@ def check_password():
 def contract_page():
     return render_template('index.html')
 
+@app.route('/delete-contract', methods=['POST'])
+def delete_contract():
+    contract_number = request.form.get('contract-number')
+
+    if not contract_number:
+        return jsonify({'error': 'يرجى إدخال رقم العقد للحذف'}), 400
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # التحقق من وجود العقد
+    contract = cursor.execute('SELECT * FROM contracts WHERE contract_number = ?', (contract_number,)).fetchone()
+    
+    if not contract:
+        conn.close()
+        return jsonify({'error': 'لم يتم العثور على العقد'}), 404
+
+    # حذف العقد من قاعدة البيانات
+    cursor.execute('DELETE FROM contracts WHERE contract_number = ?', (contract_number,))
+    conn.commit()
+    conn.close()
+
+    return jsonify({'success': 'تم حذف العقد بنجاح!'}), 200
+
+
 @app.route('/search-contract', methods=['POST'])
 def search_contract():
     apartment_number = request.form.get('apartment-number')
@@ -307,8 +330,7 @@ def search_contract():
         return render_template('index.html', error="لم يتم العثور على عقد مطابق.")
 
 if __name__ == '__main__':
-    app.run(debug=True)
-
+    app.run(debug=True) 
 
 #####################################################
 
