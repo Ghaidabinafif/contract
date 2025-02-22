@@ -328,6 +328,40 @@ def search_contract():
         return render_template('index.html', contract=contract)
     else:
         return render_template('index.html', error="لم يتم العثور على عقد مطابق.")
+    
+@app.route('/apartments')
+def apartments():
+    # قائمة أرقام الشقق
+    apartment_numbers = [
+        "101", "102", "103", "104", "105", "106", "107", "108", "109", "110",
+        "111", "112", "113", "114", "201", "202", "203", "204", "205", "206",
+        "207", "208", "209", "210A", "210B", "210C", "211", "212", "213", "214",
+        "301", "302", "303", "304", "305", "306", "307", "308", "309", "310",
+        "311", "312", "313", "314", "401A", "401B", "403", "404", "405", "406",
+        "407", "408", "409", "410", "411", "412A", "413", "415", "414", "416",
+        "417", "418", "501A", "501C", "52B", "53A", "53B", "53C", "54A", "54B",
+        "54C", "55B", "511A", "511B", "511C", "57A", "57B", "57C", "58A", "58B",
+        "58C", "Shop", "2", "3", "4", "5", "6", "401C", "412B", "412C"
+    ]
+
+    # جلب بيانات العقود من قاعدة البيانات
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    contracts = cursor.execute("SELECT apartment_number, end_contract FROM contracts").fetchall()
+    conn.close()
+
+    # ربط كل شقة بحالتها
+    apartment_status = {apt: {"status": "غير متاح", "end_contract": "غير مسجل"} for apt in apartment_numbers}
+
+    for contract in contracts:
+        apt_number = contract["apartment_number"]
+        end_contract = contract["end_contract"]
+        status = get_contract_status(end_contract)
+        if apt_number in apartment_status:
+            apartment_status[apt_number] = {"status": status, "end_contract": end_contract}
+
+    return render_template("apartments.html", apartments=apartment_status)
+
 
 if __name__ == '__main__':
     app.run(debug=True) 

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>حالة الشقق</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            direction: rtl;
+            text-align: center;
+        }
+        table {
+            width: 80%;
+            margin: auto;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        .active {
+            background-color: lightgreen;
+        }
+        .expired {
+            background-color: lightcoral;
+        }
+        .unknown {
+            background-color: lightgray;
+        }
+    </style>
+</head>
+<body>
+    <h1>حالة الشقق</h1>
+
+    <table>
+        <thead>
+            <tr>
+                <th>رقم الشقة</th>
+                <th>تاريخ نهاية العقد</th>
+                <th>حالة العقد</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for apartment, details in apartments.items() %}
+            <tr class="{% if details.status == 'فعال' %}active{% elif details.status == 'منتهي' %}expired{% else %}unknown{% endif %}">
+                <td>{{ apartment }}</td>
+                <td>{{ details.end_contract }}</td>
+                <td>{{ details.status }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+</body>
+</html>
