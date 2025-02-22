@@ -344,23 +344,24 @@ def apartments():
         "58C", "Shop", "2", "3", "4", "5", "6", "401C", "412B", "412C"
     ]
 
-    # جلب بيانات العقود من قاعدة البيانات
+    # جلب بيانات العقود من قاعدة البيانات مع start_date و contract_status
     conn = get_db_connection()
     cursor = conn.cursor()
-    contracts = cursor.execute("SELECT apartment_number, end_contract FROM contracts").fetchall()
+    contracts = cursor.execute("SELECT apartment_number, start_date, end_contract, contract_status FROM contracts").fetchall()
     conn.close()
 
     # ربط كل شقة بحالتها
     apartment_status = {apt: {"status": "غير متاح", "end_contract": "غير مسجل"} for apt in apartment_numbers}
 
     for contract in contracts:
-         apt_number = contract["apartment_number"]
-         start_date = contract["start_date"] if "start_date" in contract.keys() else None
-         end_contract = contract["end_contract"]
-         status = get_contract_status(start_date, end_contract)  # تمرير start_date و end_contract معًا
-         if apt_number in apartment_status:
-             apartment_status[apt_number] = {"status": status, "end_contract": end_contract}
+        apt_number = contract["apartment_number"]
+        start_date = contract["start_date"] if contract["start_date"] else None
+        end_contract = contract["end_contract"] if contract["end_contract"] else None
+        status = contract["contract_status"]  # استخدام الحالة المسجلة في قاعدة البيانات مباشرة
 
+        # التأكد من أن الشقة مسجلة في القائمة
+        if apt_number in apartment_status:
+            apartment_status[apt_number] = {"status": status, "end_contract": end_contract}
 
     return render_template("apartments.html", apartments=apartment_status)
 
