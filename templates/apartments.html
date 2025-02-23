@@ -20,7 +20,7 @@
             border: 1px solid #ddd;
             padding: 10px;
             text-align: center;
-            width: 25%;
+            width: 16%;
         }
         th {
             background-color: #f4f4f4;
@@ -52,7 +52,7 @@
         </thead>
         <tbody>
             {% set apt_keys = apartments.keys()|list %}
-            {% for i in range(0, apt_keys|length, 2) %}
+            {% for i in range(apt_keys|length // 2) %}
             <tr>
                 <td>{{ apt_keys[i] }}</td>
                 <td>{{ apartments[apt_keys[i]].end_contract }}</td>
@@ -60,11 +60,12 @@
                     {{ apartments[apt_keys[i]].status }}
                 </td>
 
-                {% if i+1 < apt_keys|length %}
-                    <td>{{ apt_keys[i+1] }}</td>
-                    <td>{{ apartments[apt_keys[i+1]].end_contract }}</td>
-                    <td class="{% if apartments[apt_keys[i+1]].status == 'فعال' %}active{% elif apartments[apt_keys[i+1]].status == 'منتهي' %}expired{% else %}unknown{% endif %}">
-                        {{ apartments[apt_keys[i+1]].status }}
+                {% set second_index = i + (apt_keys|length // 2) %}
+                {% if second_index < apt_keys|length %}
+                    <td>{{ apt_keys[second_index] }}</td>
+                    <td>{{ apartments[apt_keys[second_index]].end_contract }}</td>
+                    <td class="{% if apartments[apt_keys[second_index]].status == 'فعال' %}active{% elif apartments[apt_keys[second_index]].status == 'منتهي' %}expired{% else %}unknown{% endif %}">
+                        {{ apartments[apt_keys[second_index]].status }}
                     </td>
                 {% else %}
                     <td></td>
