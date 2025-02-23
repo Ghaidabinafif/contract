@@ -25,15 +25,14 @@
         th {
             background-color: #f4f4f4;
         }
-        /* ألوان الحالة */
-        .active-row {
-            background-color: lightgreen !important; /* فعال */
+        .active {
+            background-color: lightgreen !important; /* لون الشقة الفعالة */
         }
-        .expired-row {
-            background-color: lightcoral !important; /* منتهي */
+        .expired {
+            background-color: lightcoral !important; /* لون الشقة المنتهية */
         }
-        .unknown-row {
-            background-color: lightgray !important; /* غير متاح */
+        .unknown {
+            background-color: lightgray !important; /* لون الشقة غير المتاحة */
         }
     </style>
 </head>
@@ -53,19 +52,31 @@
         </thead>
         <tbody>
             {% set apt_keys = apartments.keys()|list %}
-            {% for i in range(0, apt_keys|length // 2) %}
-            {% set apt1 = apt_keys[i] %}
-            {% set apt2 = apt_keys[i + (apt_keys|length // 2)] if i + (apt_keys|length // 2) < apt_keys|length else None %}
-            
-            <tr class="{% if apartments[apt1].status.strip() == 'فعال' %}active-row{% elif apartments[apt1].status.strip() == 'منتهي' %}expired-row{% else %}unknown-row{% endif %}">
-                <td>{{ apt1 }}</td>
-                <td>{{ apartments[apt1].end_contract }}</td>
-                <td>{{ apartments[apt1].status }}</td>
+            {% for i in range(apt_keys|length // 2) %}
+            <tr>
+                <!-- الشقة الأولى -->
+                <td class="{% if apartments[apt_keys[i]].status == 'فعال' %}active{% elif apartments[apt_keys[i]].status == 'منتهي' %}expired{% else %}unknown{% endif %}">
+                    {{ apt_keys[i] }}
+                </td>
+                <td class="{% if apartments[apt_keys[i]].status == 'فعال' %}active{% elif apartments[apt_keys[i]].status == 'منتهي' %}expired{% else %}unknown{% endif %}">
+                    {{ apartments[apt_keys[i]].end_contract if 'end_contract' in apartments[apt_keys[i]] else 'غير مسجل' }}
+                </td>
+                <td class="{% if apartments[apt_keys[i]].status == 'فعال' %}active{% elif apartments[apt_keys[i]].status == 'منتهي' %}expired{% else %}unknown{% endif %}">
+                    {{ apartments[apt_keys[i]].status }}
+                </td>
 
-                {% if apt2 %}
-                    <td>{{ apt2 }}</td>
-                    <td>{{ apartments[apt2].end_contract }}</td>
-                    <td>{{ apartments[apt2].status }}</td>
+                <!-- الشقة الثانية -->
+                {% set second_index = i + (apt_keys|length // 2) %}
+                {% if second_index < apt_keys|length and apt_keys[second_index] in apartments %}
+                    <td class="{% if apartments[apt_keys[second_index]].status == 'فعال' %}active{% elif apartments[apt_keys[second_index]].status == 'منتهي' %}expired{% else %}unknown{% endif %}">
+                        {{ apt_keys[second_index] }}
+                    </td>
+                    <td class="{% if apartments[apt_keys[second_index]].status == 'فعال' %}active{% elif apartments[apt_keys[second_index]].status == 'منتهي' %}expired{% else %}unknown{% endif %}">
+                        {{ apartments[apt_keys[second_index]].end_contract if 'end_contract' in apartments[apt_keys[second_index]] else 'غير مسجل' }}
+                    </td>
+                    <td class="{% if apartments[apt_keys[second_index]].status == 'فعال' %}active{% elif apartments[apt_keys[second_index]].status == 'منتهي' %}expired{% else %}unknown{% endif %}">
+                        {{ apartments[apt_keys[second_index]].status }}
+                    </td>
                 {% else %}
                     <td></td>
                     <td></td>
@@ -77,4 +88,4 @@
     </table>
 
 </body>
-</html>  
+</html>
