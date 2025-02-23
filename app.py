@@ -172,9 +172,10 @@ def submit():
     # توليد رقم العقد تلقائيًا
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT MAX(id) FROM contracts")
-    last_contract_id = cursor.fetchone()[0]
-    new_contract_number = str((last_contract_id if last_contract_id is not None else 0) + 1).zfill(4)
+    cursor.execute("SELECT MAX(CAST(contract_number AS INTEGER)) FROM contracts")
+    last_contract_number = cursor.fetchone()[0]
+    new_contract_number = str((last_contract_number if last_contract_number else 0) + 1).zfill(4)
+
 
     data['contract-number'] = new_contract_number
 
@@ -338,7 +339,7 @@ def apartments():
         "207", "208", "209", "210A", "210B", "210C", "211", "212", "213", "214",
         "301", "302", "303", "304", "305", "306", "307", "308", "309", "310",
         "311", "312", "313", "314", "401A", "401B", "401C", "403", "404", "405", "406",
-        "407", "408", "409", "410", "411", "412A", "412B", "412C", "413", "415", "414", 
+        "407", "408", "409", "410", "411", "412A", "412B", "412C", "413", "414", "415", 
         "416", "417", "418", "501A", "501C", "52B", "53A", "53B", "53C", "54A", "54B",
         "54C", "55B", "511A", "511B", "511C", "57A", "57B", "57C", "58A", "58B",
         "58C", "Shop", "2", "3", "4", "5", "6"
@@ -347,7 +348,7 @@ def apartments():
     # جلب بيانات العقود من قاعدة البيانات مع start_date و contract_status
     conn = get_db_connection()
     cursor = conn.cursor()
-    contracts = cursor.execute("SELECT apartment_number, start_date, end_contract, contract_status FROM contracts").fetchall()
+    contracts = cursor.execute("SELECT apartment_number, contract_status FROM contracts").fetchall()
     conn.close()
 
     # ربط كل شقة بحالتها
