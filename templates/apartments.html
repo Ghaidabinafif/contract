@@ -51,22 +51,20 @@
             </tr>
         </thead>
         <tbody>
-            {% for i in range(0, apartments|length, 2) %}
+            {% set apt_keys = apartments.keys()|list %}
+            {% for i in range(0, apt_keys|length, 2) %}
             <tr>
-                {% set apt1 = apartments.keys()|list|slice(i, 1)[0] %}
-                {% set apt2 = apartments.keys()|list|slice(i+1, 1)[0] if i+1 < apartments|length else None %}
-
-                <td>{{ apt1 }}</td>
-                <td>{{ apartments[apt1].end_contract }}</td>
-                <td class="{% if apartments[apt1].status == 'فعال' %}active{% elif apartments[apt1].status == 'منتهي' %}expired{% else %}unknown{% endif %}">
-                    {{ apartments[apt1].status }}
+                <td>{{ apt_keys[i] }}</td>
+                <td>{{ apartments[apt_keys[i]].end_contract }}</td>
+                <td class="{% if apartments[apt_keys[i]].status == 'فعال' %}active{% elif apartments[apt_keys[i]].status == 'منتهي' %}expired{% else %}unknown{% endif %}">
+                    {{ apartments[apt_keys[i]].status }}
                 </td>
 
-                {% if apt2 %}
-                    <td>{{ apt2 }}</td>
-                    <td>{{ apartments[apt2].end_contract }}</td>
-                    <td class="{% if apartments[apt2].status == 'فعال' %}active{% elif apartments[apt2].status == 'منتهي' %}expired{% else %}unknown{% endif %}">
-                        {{ apartments[apt2].status }}
+                {% if i+1 < apt_keys|length %}
+                    <td>{{ apt_keys[i+1] }}</td>
+                    <td>{{ apartments[apt_keys[i+1]].end_contract }}</td>
+                    <td class="{% if apartments[apt_keys[i+1]].status == 'فعال' %}active{% elif apartments[apt_keys[i+1]].status == 'منتهي' %}expired{% else %}unknown{% endif %}">
+                        {{ apartments[apt_keys[i+1]].status }}
                     </td>
                 {% else %}
                     <td></td>
