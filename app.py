@@ -123,13 +123,13 @@ def generate_pdf(data):
 
     # طباعة رقم العقد باللون الأحمر وزيادة حجم الخط له
     pdf.set_font('Amiri', '', 50)  # زيادة حجم الخط لرقم العقد فقط
-    add_text(300, 130, 100, 30, contract_number, color=(255, 0, 0))  # طباعة رقم العقد باللون الأحمر
+    add_text(300, 135, 100, 30, contract_number, color=(255, 0, 0))  # طباعة رقم العقد باللون الأحمر
 
     # تعيين اللون الأسود لبقية البيانات
     pdf.set_font('Amiri', '', 35)  # إعادة حجم الخط لبقية البيانات إلى الحجم العادي
 
     # إضافة بقية الحقول بنفس الطريقة
-    add_text(650, 125, 120, 30, data.get('date', ''))
+    add_text(650, 132, 120, 30, data.get('date', ''))
     add_text(50, 180, 300, 30, data.get('nationality', ''))
     add_text(50, 215, 300, 30, data.get('id-number', ''))
     add_text(50, 250, 300, 30, data.get('job', ''))
@@ -347,7 +347,7 @@ def apartments():
     # جلب بيانات العقود من قاعدة البيانات مع start_date و contract_status
     conn = get_db_connection()
     cursor = conn.cursor()
-    contracts = cursor.execute("SELECT apartment_number, contract_status FROM contracts").fetchall()
+    contracts = cursor.execute("SELECT apartment_number, start_date, end_contract, contract_status FROM contracts").fetchall()
     conn.close()
 
     # ربط كل شقة بحالتها
@@ -355,15 +355,16 @@ def apartments():
 
     for contract in contracts:
         apt_number = contract["apartment_number"]
-        start_date = contract["start_date"] if contract["start_date"] else None
-        end_contract = contract["end_contract"] if contract["end_contract"] else None
-        status = contract["contract_status"]  # استخدام الحالة المسجلة في قاعدة البيانات مباشرة
+        start_date = contract["start_date"] if "start_date" in contract.keys() else None
+        end_contract = contract["end_contract"] if "end_contract" in contract.keys() else None
+        status = contract["contract_status"] if "contract_status" in contract.keys() else "غير متاح"
 
         # التأكد من أن الشقة مسجلة في القائمة
         if apt_number in apartment_status:
             apartment_status[apt_number] = {"status": status, "end_contract": end_contract}
 
     return render_template("apartments.html", apartments=apartment_status)
+
 
 
 if __name__ == '__main__':
