@@ -20,6 +20,7 @@
             border: 1px solid #ddd;
             padding: 10px;
             text-align: center;
+            width: 25%;
         }
         th {
             background-color: #f4f4f4;
@@ -44,14 +45,34 @@
                 <th>رقم الشقة</th>
                 <th>تاريخ نهاية العقد</th>
                 <th>حالة العقد</th>
+                <th>رقم الشقة</th>
+                <th>تاريخ نهاية العقد</th>
+                <th>حالة العقد</th>
             </tr>
         </thead>
         <tbody>
-            {% for apartment, details in apartments.items() %}
-            <tr class="{% if details.status == 'فعال' %}active{% elif details.status == 'منتهي' %}expired{% else %}unknown{% endif %}">
-                <td>{{ apartment }}</td>
-                <td>{{ details.end_contract }}</td>
-                <td>{{ details.status }}</td>
+            {% for i in range(0, apartments|length, 2) %}
+            <tr>
+                {% set apt1 = apartments.keys()|list|slice(i, 1)[0] %}
+                {% set apt2 = apartments.keys()|list|slice(i+1, 1)[0] if i+1 < apartments|length else None %}
+
+                <td>{{ apt1 }}</td>
+                <td>{{ apartments[apt1].end_contract }}</td>
+                <td class="{% if apartments[apt1].status == 'فعال' %}active{% elif apartments[apt1].status == 'منتهي' %}expired{% else %}unknown{% endif %}">
+                    {{ apartments[apt1].status }}
+                </td>
+
+                {% if apt2 %}
+                    <td>{{ apt2 }}</td>
+                    <td>{{ apartments[apt2].end_contract }}</td>
+                    <td class="{% if apartments[apt2].status == 'فعال' %}active{% elif apartments[apt2].status == 'منتهي' %}expired{% else %}unknown{% endif %}">
+                        {{ apartments[apt2].status }}
+                    </td>
+                {% else %}
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                {% endif %}
             </tr>
             {% endfor %}
         </tbody>
