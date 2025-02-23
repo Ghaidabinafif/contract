@@ -57,7 +57,7 @@
             {% set apt1 = apt_keys[i] %}
             {% set apt2 = apt_keys[i + (apt_keys|length // 2)] if i + (apt_keys|length // 2) < apt_keys|length else None %}
             
-            <tr class="{% if apartments[apt1].status == 'فعال' %}active-row{% elif apartments[apt1].status == 'منتهي' %}expired-row{% else %}unknown-row{% endif %}">
+            <tr class="{% if apartments[apt1].status.strip() == 'فعال' %}active-row{% elif apartments[apt1].status.strip() == 'منتهي' %}expired-row{% else %}unknown-row{% endif %}">
                 <td>{{ apt1 }}</td>
                 <td>{{ apartments[apt1].end_contract }}</td>
                 <td>{{ apartments[apt1].status }}</td>
@@ -77,4 +77,4 @@
     </table>
 
 </body>
-</html>
+</html>  

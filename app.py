@@ -355,15 +355,16 @@ def apartments():
 
     for contract in contracts:
         apt_number = contract["apartment_number"]
-        start_date = contract["start_date"] if "start_date" in contract.keys() else None
-        end_contract = contract["end_contract"] if "end_contract" in contract.keys() else None
-        status = contract["contract_status"] if "contract_status" in contract.keys() else "غير متاح"
+        start_date = contract["start_date"] if contract["start_date"] else None
+        end_contract = contract["end_contract"] if contract["end_contract"] else None
+        status = contract["contract_status"].strip() if contract["contract_status"] else "غير متاح"
 
         # التأكد من أن الشقة مسجلة في القائمة
         if apt_number in apartment_status:
             apartment_status[apt_number] = {"status": status, "end_contract": end_contract}
 
     return render_template("apartments.html", apartments=apartment_status)
+
 
 
 
