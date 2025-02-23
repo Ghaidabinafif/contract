@@ -162,79 +162,78 @@ def generate_pdf(data):
     pdf_path = f"static/{apartment_number}_{contract_date}.pdf"
     pdf.output(pdf_path)
     return pdf_path
-
 @app.route('/submit', methods=['POST'])
 def submit():
     data = request.form.to_dict()
     contract_status = get_contract_status(data.get('start-date'), data.get('end-contract'))
     data['contract-status'] = contract_status
 
-    # توليد رقم العقد تلقائيًا
+    apartment_number = data.get('apartment-number')
+    jeddah_neighborhood = data.get('jeddah-neighborhood')
+
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT MAX(CAST(contract_number AS INTEGER)) FROM contracts")
-    last_contract_number = cursor.fetchone()[0]
-    new_contract_number = str((last_contract_number if last_contract_number else 0) + 1).zfill(4)
 
-
-    data['contract-number'] = new_contract_number
-
-    apartment_number = data.get('apartment-number')
-    jeddah_neighborhood = data.get('jeddah-neighborhood')  # الحي
-    # التحقق من وجود عقد بنفس رقم الشقة والحي
+    # التحقق مما إذا كان هناك عقد موجود لنفس رقم الشقة والحي
     existing_contract = cursor.execute(
-        'SELECT * FROM contracts WHERE apartment_number = ? AND jeddah_neighborhood = ?',
+        'SELECT id, contract_number FROM contracts WHERE apartment_number = ? AND jeddah_neighborhood = ?',
         (apartment_number, jeddah_neighborhood)
     ).fetchone()
 
     if existing_contract:
+        # تحديث العقد الحالي بدلاً من إنشاء عقد جديد
+        contract_number = existing_contract['contract_number']
         cursor.execute(''' 
             UPDATE contracts
             SET
-                date = ?, contract_number = ?, nationality = ?, id_number = ?, id_type = ?,
-                job = ?, salary = ?, marital_status = ?, client_name = ?, start_date = ?,
-                end_contract = ?, contract_status = ?, jeddah_neighborhood = ?, transfer = ?,
-                end_date = ?, insurance_paid = ?, rent_fee = ?, maintenance_fee = ?, 
-                owner_signature = ?, phone = ?, monthly_rent = ?, months = ?, total = ?, 
-                amount_paid = ?, amount_in_words = ?
-            WHERE apartment_number = ? AND jeddah_neighborhood = ?
+                date = ?, nationality = ?, id_number = ?, id_type = ?, job = ?, salary = ?,
+                marital_status = ?, client_name = ?, start_date = ?, end_contract = ?,
+                contract_status = ?, transfer = ?, end_date = ?, insurance_paid = ?, rent_fee = ?,
+                maintenance_fee = ?, owner_signature = ?, phone = ?, monthly_rent = ?, months = ?,
+                total = ?, amount_paid = ?, amount_in_words = ?
+            WHERE id = ?
         ''', (
-            data.get('date'), data.get('contract-number'), data.get('nationality'),
-            data.get('id-number'), data.get('id-type'), data.get('job'), data.get('salary'),
-            data.get('marital-status'), data.get('client-name'), data.get('start-date'),
-            data.get('end-contract'), contract_status, jeddah_neighborhood, data.get('transfer'),
+            data.get('date'), data.get('nationality'), data.get('id-number'), data.get('id-type'),
+            data.get('job'), data.get('salary'), data.get('marital-status'), data.get('client-name'),
+            data.get('start-date'), data.get('end-contract'), contract_status, data.get('transfer'),
             data.get('end-date'), data.get('insurance-paid'), data.get('rent-fee'),
             data.get('maintenance-fee'), data.get('owner-signature'), data.get('phone'),
             data.get('monthly-rent'), data.get('months'), data.get('total'),
-            data.get('amount-paid'), data.get('amount-in-words'),
-            apartment_number, jeddah_neighborhood
+            data.get('amount-paid'), data.get('amount-in-words'), existing_contract['id']
         ))
     else:
+        # إضافة عقد جديد برقم عقد جديد يتم إنشاؤه تلقائيًا باستخدام AUTOINCREMENT
         cursor.execute(''' 
             INSERT INTO contracts (
-                date, contract_number, nationality, id_number, id_type, job, salary,
-                marital_status, apartment_number, client_name, start_date, end_contract,
-                contract_status, jeddah_neighborhood, transfer, end_date, insurance_paid, 
-                rent_fee, maintenance_fee, owner_signature, phone, monthly_rent, months, 
-                total, amount_paid, amount_in_words
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                date, nationality, id_number, id_type, job, salary, marital_status,
+                apartment_number, client_name, start_date, end_contract, contract_status,
+                jeddah_neighborhood, transfer, end_date, insurance_paid, rent_fee,
+                maintenance_fee, owner_signature, phone, monthly_rent, months, total,
+                amount_paid, amount_in_words
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
-            data.get('date'), data.get('contract-number'), data.get('nationality'),
-            data.get('id-number'), data.get('id-type'), data.get('job'), data.get('salary'),
-            data.get('marital-status'), data.get('apartment-number'), data.get('client-name'),
-            data.get('start-date'), data.get('end-contract'), contract_status,
-            jeddah_neighborhood, data.get('transfer'), data.get('end-date'),
-            data.get('insurance-paid'), data.get('rent-fee'), data.get('maintenance-fee'),
-            data.get('owner-signature'), data.get('phone'), data.get('monthly-rent'),
-            data.get('months'), data.get('total'), data.get('amount-paid'),
-            data.get('amount-in-words')
+            data.get('date'), data.get('nationality'), data.get('id-number'), data.get('id-type'),
+            data.get('job'), data.get('salary'), data.get('marital-status'), data.get('apartment-number'),
+            data.get('client-name'), data.get('start-date'), data.get('end-contract'), contract_status,
+            jeddah_neighborhood, data.get('transfer'), data.get('end-date'), data.get('insurance-paid'),
+            data.get('rent-fee'), data.get('maintenance-fee'), data.get('owner-signature'),
+            data.get('phone'), data.get('monthly-rent'), data.get('months'), data.get('total'),
+            data.get('amount-paid'), data.get('amount-in-words')
         ))
+
+        # جلب الرقم التسلسلي للعقد الجديد
+        contract_number = str(cursor.lastrowid).zfill(4)
+
+        # تحديث رقم العقد في الصف الجديد
+        cursor.execute("UPDATE contracts SET contract_number = ? WHERE id = ?", (contract_number, cursor.lastrowid))
 
     conn.commit()
     conn.close()
 
+    data['contract-number'] = contract_number
     pdf_path = generate_pdf(data)
     return send_file(pdf_path, as_attachment=True, download_name=pdf_path.split('/')[-1])
+
 
 @app.route('/view-database', methods=['GET', 'POST'])
 def view_database():
