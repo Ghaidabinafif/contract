@@ -331,8 +331,8 @@ def search_contract():
     
 @app.route('/apartments')
 def apartments():
-    # قائمة أرقام الشقق
-    apartment_numbers = [
+    # قائمة شقق الروابي
+    al_rawabi_apartments = [
         "101", "102", "103", "104", "105", "106", "107", "108", "109", "110",
         "111", "112", "113", "114", "201", "202", "203", "204", "205", "206",
         "207", "208", "209", "210A", "210B", "210C", "211", "212", "213", "214",
@@ -344,26 +344,41 @@ def apartments():
         "58C", "Shop", "2", "3", "4", "5", "6"
     ]
 
-    # جلب بيانات العقود من قاعدة البيانات مع start_date و contract_status
+    # قائمة شقق بني مالك 4
+    bin_malik_4_apartments = [
+        "1", "2", "3", "4", "5", "6", "7",
+        "11", "12", "13", "14", "15", "16", "17",
+        "21", "22", "23", "24", "25", "26", "27",
+        "31", "32", "33", "34", "35", "36",
+        "41", "42", "43", "44", "45", "46",
+        "102", "104", "106", "108", "110", "112",
+        "202", "204", "206", "208", "210", "212", "213", "214",
+        "61", "62", "63", "64", "8", "9", "10"
+    ]
+
+    # جلب بيانات العقود من قاعدة البيانات
     conn = get_db_connection()
     cursor = conn.cursor()
     contracts = cursor.execute("SELECT apartment_number, start_date, end_contract, contract_status FROM contracts").fetchall()
     conn.close()
 
-    # ربط كل شقة بحالتها
-    apartment_status = {apt: {"status": "غير متاح", "end_contract": "غير مسجل"} for apt in apartment_numbers}
+    # إنشاء قاموس لكل عمارة مع الحالة الافتراضية
+    al_rawabi_status = {apt: {"status": "غير متاح", "end_contract": "غير مسجل"} for apt in al_rawabi_apartments}
+    bin_malik_4_status = {apt: {"status": "غير متاح", "end_contract": "غير مسجل"} for apt in bin_malik_4_apartments}
 
+    # تحديث الحالة بناءً على العقود المسجلة
     for contract in contracts:
         apt_number = contract["apartment_number"]
-        start_date = contract["start_date"] if contract["start_date"] else None
-        end_contract = contract["end_contract"] if contract["end_contract"] else None
+        end_contract = contract["end_contract"] if contract["end_contract"] else "غير مسجل"
         status = contract["contract_status"].strip() if contract["contract_status"] else "غير متاح"
 
-        # التأكد من أن الشقة مسجلة في القائمة
-        if apt_number in apartment_status:
-            apartment_status[apt_number] = {"status": status, "end_contract": end_contract}
+        if apt_number in al_rawabi_status:
+            al_rawabi_status[apt_number] = {"status": status, "end_contract": end_contract}
+        elif apt_number in bin_malik_4_status:
+            bin_malik_4_status[apt_number] = {"status": status, "end_contract": end_contract}
 
-    return render_template("apartments.html", apartments=apartment_status)
+    return render_template("apartments.html", al_rawabi=al_rawabi_status, bin_malik_4=bin_malik_4_status)
+
 
 
 
