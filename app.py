@@ -172,7 +172,7 @@ def generate_pdf(data):
     add_text(450, 280, 350, 30, data.get('phone', ''))
     add_text(450, 320, 350, 30, data.get('start-date', ''))
     add_text(450, 350, 350, 30, data.get('monthly-rent', ''))
-    add_text(450, 385, 350, 30, data.get('months', ''))
+    add_text(450, 385, 350, 30, data.get('duration', ''))
     add_text(450, 420, 350, 30, data.get('total', ''))
 
     apartment_number = data.get('apartment-number', 'unknown')

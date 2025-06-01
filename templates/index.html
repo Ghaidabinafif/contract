@@ -393,10 +393,27 @@
                    value="{{ contract['phone'] if contract else '' }}">
             <input type="date" id="start-date" name="start-date" class="input-field"
                    value="{{ contract['start_date'] if contract else '' }}">
+            
+                        <!-- قيمة الإيجار -->
             <input type="number" id="monthly-rent" name="monthly-rent" class="input-field"
-                   value="{{ contract['monthly_rent'] if contract else '' }}">
-            <input type="number" id="months" name="months" class="input-field"
-                   value="{{ contract['months'] if contract else '' }}">
+            value="{{ contract['monthly_rent'] if contract else '' }}">
+
+           
+
+            <!-- المدة -->
+            <label id="duration-label"
+            style="position: absolute; top: 1365px; right: 1700px; font-size: 30px;"></label>
+            <select id="duration" name="duration" class="input-field"
+            style="top: 1393px; left: 1697px; width: 1207px; height: 94px; font-size: 35px; padding: 10px;">
+            <option value="يوم" {% if contract and contract['duration'] == 'يوم' %}selected{% endif %}>يوم</option>
+            <option value="أسبوع" {% if contract and contract['duration'] == 'أسبوع' %}selected{% endif %}>أسبوع</option>
+            <option value="10 أيام" {% if contract and contract['duration'] == '10 أيام' %}selected{% endif %}>10 أيام</option>
+            <option value="ربع شهر" {% if contract and contract['duration'] == 'ربع شهر' %}selected{% endif %}>ربع شهر</option>
+            <option value="نصف شهر" {% if contract and contract['duration'] == 'نصف شهر' %}selected{% endif %}>نصف شهر</option>
+            <option value="شهر" {% if contract and contract['duration'] == 'شهر' %}selected{% endif %}>شهر</option>
+            <option value="شهر ونصف" {% if contract and contract['duration'] == 'شهر ونصف' %}selected{% endif %}>شهر ونصف</option>
+            </select>
+
             <input type="text" id="total" name="total" class="input-field" readonly
                    value="{{ contract['total'] if contract else '' }}">
             <input type="number" id="amount-paid" name="amount-paid" class="input-field"
@@ -416,20 +433,36 @@
         
     <script>
         // حساب الإجمالي بناءً على المدخلات
-        const monthlyRentField = document.getElementById('monthly-rent');
-        const monthsField = document.getElementById('months');
-        const totalField = document.getElementById('total');
-
-        function updateTotal() {
-            const monthlyRent = parseFloat(monthlyRentField.value) || 0;
-            const months = parseFloat(monthsField.value) || 0;
-            const total = monthlyRent * months;
-            totalField.value = total.toFixed(2);
-        }
-
-        monthlyRentField.addEventListener('input', updateTotal);
-        monthsField.addEventListener('input', updateTotal);
+        
+            const rentTypeField = document.getElementById('rent-type');
+            const rentAmountField = document.getElementById('monthly-rent'); // المبلغ المدخل (شهري/أسبوعي/يومي)
+            const durationField = document.getElementById('duration'); // المدة: شهور أو أسابيع أو أيام
+            const totalField = document.getElementById('total');
+        
+            function updateTotal() {
+                const rent = parseFloat(rentAmountField.value) || 0;
+                const duration = parseFloat(durationField.value) || 0;
+                const rentType = rentTypeField.value;
+        
+                let total = 0;
+                if (rentType === "شهري") {
+                    total = rent * duration;
+                } else if (rentType === "أسبوعي") {
+                    total = rent * duration;
+                } else if (rentType === "يومي") {
+                    total = rent * duration;
+                }
+        
+                totalField.value = total.toFixed(2);
+            }
+        
+            // نحدث القيمة عند التغيير
+            rentTypeField.addEventListener('change', updateTotal);
+            rentAmountField.addEventListener('input', updateTotal);
+            durationField.addEventListener('input', updateTotal);
     </script>
+        
+        
 
     <form id="search-form" method="POST" action="/search-contract">
         {% if error %}
