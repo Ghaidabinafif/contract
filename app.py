@@ -64,8 +64,16 @@ def prepare_arabic_text(text):
 
 def get_contract_status(start_date, end_contract):
     today = datetime.now().date()
-    start = datetime.strptime(start_date, '%Y-%m-%d').date() if start_date else None
-    end = datetime.strptime(end_contract, '%Y-%m-%d').date() if end_contract else None
+    
+    try:
+        start = datetime.strptime(start_date.strip(), '%Y-%m-%d').date() if start_date else None
+    except Exception:
+        start = None
+
+    try:
+        end = datetime.strptime(end_contract.strip(), '%Y-%m-%d').date() if end_contract else None
+    except Exception:
+        end = None
 
     if start and end:
         if today < start:
@@ -74,7 +82,15 @@ def get_contract_status(start_date, end_contract):
             return "فعال"
         else:
             return "منتهي"
+    
+    elif start and not end:
+        return "منتهي" if today > start else "لم يبدأ"
+
+    elif not start and end:
+        return "فعال" if today <= end else "منتهي"
+
     return "غير معروف"
+
 
 @app.route('/contract-status')
 def contract_status():
@@ -85,13 +101,15 @@ def contract_status():
     conn.close()
 
     if contract:
+        status = get_contract_status(contract['start_date'], contract['end_contract'])
         return render_template(
             'contract_status.html',
             contract_number=contract['contract_number'],
             start_date=contract['start_date'],
             end_contract=contract['end_contract'],
-            status=contract['contract_status']
-        )
+            status=status
+    )
+
     else:
         return "العقد غير موجود."
 
@@ -257,7 +275,7 @@ def view_database():
             contracts = conn.execute('SELECT * FROM contracts').fetchall()
 
     conn.close()
-    return render_template('view_database.html', contracts=contracts)
+    return render_template('view_database.html', contracts=contracts, get_contract_status=get_contract_status)
 
 @app.route('/')
 def login():

@@ -120,7 +120,7 @@
                     <td>{{ contract['apartment_number'] }}</td>
                     <td>{{ contract['start_date'] }}</td>
                     <td>{{ contract['end_contract'] }}</td>
-                    <td>{{ contract['contract_status'] }}</td>
+                    <td>{{ get_contract_status(contract['start_date'], contract['end_contract']) }}</td>
                     <td>{{ contract['jeddah_neighborhood'] }}</td>
                     <td>{{ contract['transfer'] }}</td>
                     <td>{{ contract['end_date'] }}</td>
