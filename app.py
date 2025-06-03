@@ -358,15 +358,15 @@ def apartments():
         "311", "312", "313", "314", "401A", "401B", "401C", "403", "404", "405", "406",
         "407", "408", "409", "410", "411A", "411B", "411C", "412A", "412B", "412C", "413", "414", "415", 
         "416", "417", "418", "501A", "501C", "52B", "53A", "53B", "53C", "54A", "54B",
-        "54C", "55B", "511A", "511B", "511C", "57A", "57B", "57C", "58A", "58B",
+        "54C", "55B", "511A", "511B", "511C", "57A", "57B", "57C", "58A", "58B", "58C",
         "601", "602", "603", "604", "605", "606", "607", "608", "609", "610", "611", "612",
         "613", "614", "615", "616", "617", "618",
-        "58C", "Shop", "2", "3", "4", "5", "6"
+        "Shop", "2", "3", "4", "5", "6"
     ]
 
     bin_malik_4_apartments = [
-        "1", "2", "3", "4", "5", "6", "7", "8", "9", 
-        "10", "11", "12", "13", "14", "15", "16", "17",
+        "1", "2", "3", "4", "5", "6", "7", "8F", "9F", 
+        "10F", "11", "12", "13", "14", "15", "16", "17",
         "21", "22", "23", "24", "25", "26", "27",
         "31", "32", "33", "34", "35", "36",
         "41", "42", "43", "44", "45", "46",
@@ -379,7 +379,7 @@ def apartments():
     # جلب بيانات العقود من قاعدة البيانات
     conn = get_db_connection()
     cursor = conn.cursor()
-    contracts = cursor.execute("SELECT apartment_number, start_date, end_contract, contract_status, jeddah_neighborhood FROM contracts").fetchall()
+    contracts = cursor.execute("SELECT apartment_number, start_date, end_contract, contract_status, jeddah_neighborhood, amount_paid, monthly_rent FROM contracts").fetchall()
     conn.close()
 
     # تصنيف الشقق حسب العمارة
@@ -392,11 +392,36 @@ def apartments():
         end_contract = contract["end_contract"] if contract["end_contract"] else "غير مسجل"
         neighborhood = contract["jeddah_neighborhood"].strip() if contract["jeddah_neighborhood"] else ""
 
-        # التأكد من أن الشقة تذهب إلى العمارة الصحيحة
+        try:
+            amount_paid = float(contract["amount_paid"]) if contract["amount_paid"] else 0
+        except (ValueError, TypeError):
+            amount_paid = 0
+
+        try:
+            monthly_rent = float(contract["monthly_rent"]) if contract["monthly_rent"] else 0
+        except (ValueError, TypeError):
+            monthly_rent = 0
+
+        due = amount_paid < monthly_rent
+        not_started = status == "لم يبدأ"  # ✅ التحقق من أن العقد لم يبدأ
+
         if apt_number in al_rawabi_apartments and neighborhood == "الروابي":
-            al_rawabi_status[apt_number] = {"status": status, "end_contract": end_contract}
+            al_rawabi_status[apt_number] = {
+                "status": status,
+                "end_contract": end_contract,
+                "due": due,
+                "not_started": not_started  # ✅ إضافتها
+            }
+
         elif apt_number in bin_malik_4_apartments and neighborhood == "بني مالك 4":
-            bin_malik_4_status[apt_number] = {"status": status, "end_contract": end_contract}
+            bin_malik_4_status[apt_number] = {
+                "status": status,
+                "end_contract": end_contract,
+                "due": due,
+                "not_started": not_started  # ✅ إضافتها
+            }
+
+
 
     return render_template("apartments.html", al_rawabi=al_rawabi_status, bin_malik_4=bin_malik_4_status)
 

@@ -25,13 +25,19 @@
             background-color: #f4f4f4;
         }
         .active {
-            background-color: lightgreen !important; /* لون الشقة الفعالة */
+            background-color: lightgreen !important;
         }
         .expired {
-            background-color: lightcoral !important; /* لون الشقة المنتهية */
+            background-color: lightcoral !important;
         }
         .unknown {
-            background-color: lightgray !important; /* لون الشقة غير المتاحة */
+            background-color: lightgray !important;
+        }
+        .due {
+            background-color: orange !important;
+        }
+        .not-started {
+            background-color:rgb(124, 187, 255) !important;
         }
     </style>
 </head>
@@ -51,24 +57,25 @@
             {% set apt_keys = al_rawabi.keys()|list %}
             {% for i in range(0, apt_keys|length // 2) %}
             <tr>
-                <td class="{% if al_rawabi[apt_keys[i]].status == 'فعال' %}active{% elif al_rawabi[apt_keys[i]].status == 'منتهي' %}expired{% else %}unknown{% endif %}">
+                {% set apt1 = al_rawabi[apt_keys[i]] %}
+                <td class="{% if apt1.status == 'لم يبدأ' %}not-started{% elif apt1.due and apt1.status == 'فعال' %}due{% elif apt1.status == 'فعال' %}active{% elif apt1.status == 'منتهي' %}expired{% else %}unknown{% endif %}">
                     {{ apt_keys[i] }}
                 </td>
-                <td class="{% if al_rawabi[apt_keys[i]].status == 'فعال' %}active{% elif al_rawabi[apt_keys[i]].status == 'منتهي' %}expired{% else %}unknown{% endif %}">
-                    {{ al_rawabi[apt_keys[i]].end_contract if 'end_contract' in al_rawabi[apt_keys[i]] else 'غير مسجل' }}
+                <td class="{% if apt1.status == 'لم يبدأ' %}not-started{% elif apt1.due and apt1.status == 'فعال' %}due{% elif apt1.status == 'فعال' %}active{% elif apt1.status == 'منتهي' %}expired{% else %}unknown{% endif %}">
+                    {{ apt1.end_contract if 'end_contract' in apt1 else 'غير مسجل' }}
                 </td>
 
                 {% set second_index = i + (apt_keys|length // 2) %}
                 {% if second_index < apt_keys|length %}
-                    <td class="{% if al_rawabi[apt_keys[second_index]].status == 'فعال' %}active{% elif al_rawabi[apt_keys[second_index]].status == 'منتهي' %}expired{% else %}unknown{% endif %}">
+                    {% set apt2 = al_rawabi[apt_keys[second_index]] %}
+                    <td class="{% if apt2.status == 'لم يبدأ' %}not-started{% elif apt2.due and apt2.status == 'فعال' %}due{% elif apt2.status == 'فعال' %}active{% elif apt2.status == 'منتهي' %}expired{% else %}unknown{% endif %}">
                         {{ apt_keys[second_index] }}
                     </td>
-                    <td class="{% if al_rawabi[apt_keys[second_index]].status == 'فعال' %}active{% elif al_rawabi[apt_keys[second_index]].status == 'منتهي' %}expired{% else %}unknown{% endif %}">
-                        {{ al_rawabi[apt_keys[second_index]].end_contract if 'end_contract' in al_rawabi[apt_keys[second_index]] else 'غير مسجل' }}
+                    <td class="{% if apt2.status == 'لم يبدأ' %}not-started{% elif apt2.due and apt2.status == 'فعال' %}due{% elif apt2.status == 'فعال' %}active{% elif apt2.status == 'منتهي' %}expired{% else %}unknown{% endif %}">
+                        {{ apt2.end_contract if 'end_contract' in apt2 else 'غير مسجل' }}
                     </td>
                 {% else %}
-                    <td></td>
-                    <td></td>
+                    <td></td><td></td>
                 {% endif %}
             </tr>
             {% endfor %}
@@ -89,24 +96,25 @@
             {% set apt_keys = bin_malik_4.keys()|list %}
             {% for i in range(0, apt_keys|length // 2) %}
             <tr>
-                <td class="{% if bin_malik_4[apt_keys[i]].status == 'فعال' %}active{% elif bin_malik_4[apt_keys[i]].status == 'منتهي' %}expired{% else %}unknown{% endif %}">
+                {% set apt1 = bin_malik_4[apt_keys[i]] %}
+                <td class="{% if apt1.status == 'لم يبدأ' %}not-started{% elif apt1.due and apt1.status == 'فعال' %}due{% elif apt1.status == 'فعال' %}active{% elif apt1.status == 'منتهي' %}expired{% else %}unknown{% endif %}">
                     {{ apt_keys[i] }}
                 </td>
-                <td class="{% if bin_malik_4[apt_keys[i]].status == 'فعال' %}active{% elif bin_malik_4[apt_keys[i]].status == 'منتهي' %}expired{% else %}unknown{% endif %}">
-                    {{ bin_malik_4[apt_keys[i]].end_contract if 'end_contract' in bin_malik_4[apt_keys[i]] else 'غير مسجل' }}
+                <td class="{% if apt1.status == 'لم يبدأ' %}not-started{% elif apt1.due and apt1.status == 'فعال' %}due{% elif apt1.status == 'فعال' %}active{% elif apt1.status == 'منتهي' %}expired{% else %}unknown{% endif %}">
+                    {{ apt1.end_contract if 'end_contract' in apt1 else 'غير مسجل' }}
                 </td>
 
                 {% set second_index = i + (apt_keys|length // 2) %}
                 {% if second_index < apt_keys|length %}
-                    <td class="{% if bin_malik_4[apt_keys[second_index]].status == 'فعال' %}active{% elif bin_malik_4[apt_keys[second_index]].status == 'منتهي' %}expired{% else %}unknown{% endif %}">
+                    {% set apt2 = bin_malik_4[apt_keys[second_index]] %}
+                    <td class="{% if apt2.status == 'لم يبدأ' %}not-started{% elif apt2.due and apt2.status == 'فعال' %}due{% elif apt2.status == 'فعال' %}active{% elif apt2.status == 'منتهي' %}expired{% else %}unknown{% endif %}">
                         {{ apt_keys[second_index] }}
                     </td>
-                    <td class="{% if bin_malik_4[apt_keys[second_index]].status == 'فعال' %}active{% elif bin_malik_4[apt_keys[second_index]].status == 'منتهي' %}expired{% else %}unknown{% endif %}">
-                        {{ bin_malik_4[apt_keys[second_index]].end_contract if 'end_contract' in bin_malik_4[apt_keys[second_index]] else 'غير مسجل' }}
+                    <td class="{% if apt2.status == 'لم يبدأ' %}not-started{% elif apt2.due and apt2.status == 'فعال' %}due{% elif apt2.status == 'فعال' %}active{% elif apt2.status == 'منتهي' %}expired{% else %}unknown{% endif %}">
+                        {{ apt2.end_contract if 'end_contract' in apt2 else 'غير مسجل' }}
                     </td>
                 {% else %}
-                    <td></td>
-                    <td></td>
+                    <td></td><td></td>
                 {% endif %}
             </tr>
             {% endfor %}
