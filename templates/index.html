@@ -554,6 +554,23 @@
         });
         
     </script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const rentInput = document.getElementById("monthly-rent");
+            const totalInput = document.getElementById("total");
+        
+            if (rentInput && totalInput) {
+                rentInput.addEventListener("input", function () {
+                    totalInput.value = rentInput.value;
+                });
+        
+                // لو في قيمة موجودة مسبقًا، تنعرض تلقائيًا
+                totalInput.value = rentInput.value;
+            }
+        });
+        </script>
+        
     <div class="container">
         <div class="py-5 text-center">
             <h2>Bootstrap Hijri Date Picker v1.0.0</h2>
