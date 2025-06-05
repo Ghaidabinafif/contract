@@ -388,7 +388,7 @@ def apartments():
 
     for contract in contracts:
         apt_number = contract["apartment_number"]
-        status = contract["contract_status"].strip() if contract["contract_status"] else "غير متاح"
+        status = get_contract_status(contract["start_date"], contract["end_contract"])
         end_contract = contract["end_contract"] if contract["end_contract"] else "غير مسجل"
         neighborhood = contract["jeddah_neighborhood"].strip() if contract["jeddah_neighborhood"] else ""
 
