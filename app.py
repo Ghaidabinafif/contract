@@ -4,6 +4,7 @@ import arabic_reshaper
 from bidi.algorithm import get_display
 import qrcode
 from datetime import datetime
+import pytz
 import sqlite3  # لإضافة قاعدة البيانات
 
 app = Flask(__name__)
@@ -63,7 +64,8 @@ def prepare_arabic_text(text):
     return bidi_text
 
 def get_contract_status(start_date, end_contract):
-    today = datetime.now().date()
+    sa_timezone = pytz.timezone('Asia/Riyadh')
+    today = datetime.now(sa_timezone).date()  # <-- هنا التعديل المهم
     
     try:
         start = datetime.strptime(start_date.strip(), '%Y-%m-%d').date() if start_date else None
