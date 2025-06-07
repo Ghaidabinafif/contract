@@ -401,18 +401,10 @@
            
 
             <!-- المدة -->
-            <label id="duration-label"
-            style="position: absolute; top: 1365px; right: 1700px; font-size: 30px;"></label>
-            <select id="duration" name="duration" class="input-field"
-            style="top: 1393px; left: 1697px; width: 1207px; height: 94px; font-size: 35px; padding: 10px;">
-            <option value="يوم" {% if contract and contract['duration'] == 'يوم' %}selected{% endif %}>يوم</option>
-            <option value="أسبوع" {% if contract and contract['duration'] == 'أسبوع' %}selected{% endif %}>أسبوع</option>
-            <option value="10 أيام" {% if contract and contract['duration'] == '10 أيام' %}selected{% endif %}>10 أيام</option>
-            <option value="ربع شهر" {% if contract and contract['duration'] == 'ربع شهر' %}selected{% endif %}>ربع شهر</option>
-            <option value="نصف شهر" {% if contract and contract['duration'] == 'نصف شهر' %}selected{% endif %}>نصف شهر</option>
-            <option value="شهر" {% if contract and contract['duration'] == 'شهر' %}selected{% endif %}>شهر</option>
-            <option value="شهر ونصف" {% if contract and contract['duration'] == 'شهر ونصف' %}selected{% endif %}>شهر ونصف</option>
-            </select>
+            <input type="text" id="duration" name="duration" class="input-field"
+            style="top: 1393px; left: 1697px; width: 1207px; height: 94px; font-size: 35px; padding: 10px;"
+            value="{{ contract['duration'] if contract else 'شهر' }}">
+
 
             <input type="text" id="total" name="total" class="input-field" readonly
                    value="{{ contract['total'] if contract else '' }}">
