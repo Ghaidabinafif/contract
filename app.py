@@ -27,7 +27,6 @@ DB_FILE = os.environ.get('DB_PATH', 'contracts.db')
 if os.path.dirname(DB_FILE):
     os.makedirs(os.path.dirname(DB_FILE), exist_ok=True)
 SA_TZ = pytz.timezone('Asia/Riyadh')
-MIN_CONTRACT_SEQ = 124  # آخر رقم عقد كان مستخدم في الموقع القديم
 
 # أرقام شقق العمارتين
 AL_RAWABI_APARTMENTS = [
@@ -153,13 +152,12 @@ def init_db():
             amount_in_words TEXT
         )
     ''')
-    # أرقام العقود القديمة وصلت 0124 قبل ما تضيع البيانات، فالعقود الجديدة تبدأ بعدها
-    # عشان ما يتكرر رقم عقد قديم (الـQR في العقود المطبوعة يعتمد على الرقم)
+    # الترقيم يبدأ من 0001 ويكمل بالتسلسل.
+    # إذا العداد واقف على 124 من التعديل السابق وما فيه عقود بهالأرقام، يرجع لآخر رقم مستخدم فعلاً
     row = cursor.execute("SELECT seq FROM sqlite_sequence WHERE name = 'contracts'").fetchone()
-    if row is None:
-        cursor.execute("INSERT INTO sqlite_sequence (name, seq) VALUES ('contracts', ?)", (MIN_CONTRACT_SEQ,))
-    elif row[0] < MIN_CONTRACT_SEQ:
-        cursor.execute("UPDATE sqlite_sequence SET seq = ? WHERE name = 'contracts'", (MIN_CONTRACT_SEQ,))
+    max_id = cursor.execute("SELECT COALESCE(MAX(id), 0) FROM contracts").fetchone()[0]
+    if row is not None and row[0] == 124 and max_id < 124:
+        cursor.execute("UPDATE sqlite_sequence SET seq = ? WHERE name = 'contracts'", (max_id,))
     conn.commit()
     conn.close()
 
