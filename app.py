@@ -165,6 +165,40 @@ def init_db():
 init_db()
 
 
+def renumber_restored_once():
+    """مرة وحدة بس: العقود المسترجعة من ملفات PDF دخلت بأرقامها القديمة (لين 0124)،
+    فنعيد ترقيمها من 0001 بنفس ترتيبها، والعقود الجديدة تكمل بعدها"""
+    marker = DB_FILE + '.renumbered'
+    if os.path.exists(marker):
+        return
+    conn = get_db_connection()
+    try:
+        conn.execute('BEGIN IMMEDIATE')
+        if not conn.execute("SELECT 1 FROM contracts WHERE contract_number = '0124'").fetchone():
+            conn.rollback()
+            return
+        conn.rollback()
+        # نسخة احتياطية من قاعدة البيانات قبل أي تعديل
+        backup = sqlite3.connect(DB_FILE + '.before-renumber')
+        conn.backup(backup)
+        backup.close()
+        conn.execute('BEGIN IMMEDIATE')
+        ids = [r['id'] for r in conn.execute('SELECT id FROM contracts ORDER BY id')]
+        conn.execute('UPDATE contracts SET id = id + 1000000')
+        for new_id, old_id in enumerate(ids, 1):
+            conn.execute('UPDATE contracts SET id = ?, contract_number = ? WHERE id = ?',
+                         (new_id, str(new_id).zfill(4), old_id + 1000000))
+        conn.execute("UPDATE sqlite_sequence SET seq = ? WHERE name = 'contracts'", (len(ids),))
+        conn.commit()
+        with open(marker, 'w') as f:
+            f.write(f'renumbered {len(ids)} contracts')
+    finally:
+        conn.close()
+
+
+renumber_restored_once()
+
+
 def login_required(view):
     @wraps(view)
     def wrapper(*args, **kwargs):
@@ -580,13 +614,17 @@ def import_contracts():
     conn = get_db_connection()
     existing_numbers = {r['contract_number'] for r in conn.execute('SELECT contract_number FROM contracts')}
     existing_ids = {r['id'] for r in conn.execute('SELECT id FROM contracts')}
+    # نفس العقد (نفس الشقة والمستأجر وتاريخ البداية) ما يتكرر حتى لو رقمه تغير
+    same_contract = lambda r: (norm(r['jeddah_neighborhood']), norm(r['apartment_number']), (r['client_name'] or '').strip(), (r['start_date'] or '').strip())
+    existing_contracts = {same_contract(r) for r in conn.execute('SELECT * FROM contracts')}
     for raw in reader:
         row = {c: (raw.get(c) or '').strip() for c in BACKUP_COLUMNS}
         row = {c: ('' if v == 'None' else v) for c, v in row.items()}
         number = row['contract_number']
-        if number and number in existing_numbers:
+        if (number and number in existing_numbers) or same_contract(row) in existing_contracts:
             skipped += 1
             continue
+        existing_contracts.add(same_contract(row))
         row['contract_status'] = get_contract_status(row['start_date'], row['end_contract'])
         cols = list(row.keys())
         values = [row[c] for c in cols]
@@ -602,6 +640,9 @@ def import_contracts():
         existing_numbers.add(number)
         imported += 1
     conn.commit()
+    conn.close()
+    renumber_restored_once()  # إذا هذا ملف العقود المسترجعة، يترقم من 0001 على طول
+    conn = get_db_connection()
     total = conn.execute('SELECT COUNT(*) FROM contracts').fetchone()[0]
     conn.close()
     return render_template('import.html', done=True, imported=imported, skipped=skipped, total=total)
