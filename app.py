@@ -545,7 +545,8 @@ def export_contracts():
     for row in rows:
         writer.writerow([row[c] if row[c] is not None else '' for c in BACKUP_COLUMNS])
     data = ('﻿' + out.getvalue()).encode('utf-8')
-    filename = f"afif-contracts-backup-{datetime.now(SA_TZ).strftime('%Y-%m-%d')}.csv"
+    # الوقت والعدد في اسم الملف عشان نسخة جديدة ما تنحفظ فوق نسخة قديمة بنفس الاسم
+    filename = f"afif-contracts-backup-{datetime.now(SA_TZ).strftime('%Y-%m-%d-%H%M')}-{len(rows)}-contracts.csv"
     return send_file(io.BytesIO(data), mimetype='text/csv', as_attachment=True, download_name=filename)
 
 
