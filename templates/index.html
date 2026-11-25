@@ -1,588 +1,195 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>عقد الإيجار</title>
+{% extends 'base.html' %}
+{% block title %}عقد الإيجار - أملاك عبدالقادر عفيف{% endblock %}
 
-
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: Arial, sans-serif;
-            direction: rtl;
-            background-color: #ffffff;
-        }
-    
-        /* إعدادات الصورة كخلفية */
-        .contract {
-            position: relative;
-            width: 3508px; /* عرض الصورة */
-            height: 2480px; /* ارتفاع الصورة */
-            background: url('/static/contract.png') no-repeat center;
-            background-size: cover; /* لضمان أن الصورة تغطي الحاوية بالكامل */
-            margin: auto; /* لمحاذاة الصورة في الوسط */
-        }
-    
-        /* إعدادات الحقول */
-        .input-field {
-            position: absolute; /* لتثبيت الحقول فوق الصورة */
-            border: 1px solid #ccc;
-            background: rgba(255, 255, 255, 0.8);
-            font-size: 16px;
-            padding: 5px;
-            box-sizing: border-box;
-        }
-    
-        /* إعدادات حقل التاريخ */
-        #date, #end-date, #start-date, #end-contract {
-            top: 484px; /* المسافة من أعلى الصورة */
-            left: 2521px; /* المسافة من يسار الصورة */
-            width: 442px; /* عرض الحقل */
-            height: 94px; /* ارتفاع الحقل */
-            text-align: center;
-            font-size: 45px;
-        }
-    
-        /* إعدادات حقل رقم العقد */
-        #contract-number {
-            top: 484px;
-            left: 362px;
-            width: 314px; /* العرض */
-            height: 94px; /* الارتفاع */
-            font-size: 35px;
-            padding: 10px;
-        }
-    
-        /* إعدادات حقل الجنسية */
-        #nationality {
-            top: 671px;
-            left: 161px;
-            width: 1030px; /* العرض */
-            height: 94px; /* الارتفاع */
-            font-size: 35px;
-            padding: 10px;
-        }
-    
-        /* إعدادات حقل رقم الإثبات */
-        #id-number {
-            top: 791px;
-            left: 161px;
-            width: 1030px; /* العرض */
-            height: 94px; /* الارتفاع */
-            font-size: 35px;
-            padding: 10px;
-        }
-    
-        /* إعدادات حقل العمل */
-        #job {
-            top: 912px;
-            left: 161px;
-            width: 1030px; /* العرض */
-            height: 94px; /* الارتفاع */
-            font-size: 35px;
-            padding: 10px;
-        }
-    
-        /* إعدادات حقل تاريخ الإنتهاء */
-        #end-date {
-            top: 911px;
-            left: 1697px;
-            width: 1207px; /* العرض */
-            height: 94px; /* الارتفاع */
-            padding: 10px;
-        }
-    
-        /* إعدادات حقل الراتب */
-        #salary {
-            top: 1032px;
-            left: 716px;
-            width: 475px; /* العرض */
-            height: 94px; /* الارتفاع */
-            font-size: 35px;
-            padding: 10px;
-        }
-    
-        /* إعدادات حقل الحالة الاجتماعية */
-        #marital-status {
-            top: 1032px;
-            left: 161px;
-            width: 314px; /* العرض */
-            height: 94px; /* الارتفاع */
-            font-size: 35px;
-            padding: 10px;
-        }
-    
-        /* إعدادات حقل جدة حي */
-        #jeddah-neighborhood {
-            top: 1273px; /* موقع حقل جدة حي */
-            left: 161px;
-            width: 1030px; /* العرض */
-            height: 94px; /* الارتفاع */
-            font-size: 35px;
-            padding: 10px;
-        }
-    
-        /* إعدادات حقل اسم العميل */
-        #client-name {
-            top: 671px;
-            left: 1697px;
-            width: 1207px;
-            height: 94px;
-            font-size: 35px;
-            padding: 10px;
-        }
-    
-        /* إعدادات حقل نوع الإثبات */
-        #id-type {
-            top: 791px;
-            left: 1697px;
-            width: 1207px;
-            height: 94px;
-            font-size: 35px;
-            padding: 10px;
-        }
-    
-        /* إعدادات حقل نهاية العقد */
-        #end-contract {
-            top: 1154px;
-            left: 161px;
-            width: 1030px;
-            height: 94px;
-        }
-    
-        /* إعدادات حقل شقة رقم */
-        #apartment-number {
-            top: 1393px;
-            left: 161px;
-            width: 1030px;
-            height: 94px;
-            font-size: 35px;
-            padding: 10px;
-        }
-    
-        /* إعدادات حقل التأمين المدفوع */
-        #insurance-paid {
-            top: 1514px; /* المسافة من أعلى الصورة */
-            left: 161px; /* المسافة من يسار الصورة */
-            width: 1030px; /* العرض */
-            height: 94px; /* الارتفاع */
-            font-size: 35px;
-            padding: 10px;
-        }
-    
-        /* إعدادات حقل أجرة */
-        #rent-fee {
-            top: 2018px; /* المسافة من أعلى الصورة */
-            left: 1794px; /* المسافة من يسار الصورة */
-            width: 257px; /* العرض */
-            height: 60px; /* الارتفاع */
-            font-size: 35px;
-            padding: 10px;
-        }
-    
-        /* إعدادات حقل نفقة */
-        #maintenance-fee {
-            top: 2193px; /* المسافة من أعلى الصورة */
-            left: 2352px; /* المسافة من يسار الصورة */
-            width: 525px; /* العرض */
-            height: 60px; /* الارتفاع */
-            font-size: 35px;
-            padding: 10px;
-        }
-    
-        /* إعدادات حقل توقيع المالك */
-        #owner-signature {
-            top: 2346px; /* المسافة من أعلى الصورة */
-            left: 2572px; /* المسافة من يسار الصورة */
-            width: 525px; /* العرض */
-            height: 60px; /* الارتفاع */
-            font-size: 35px;
-            padding: 10px;
-        }
-    
-        /* إعدادات حقل الجوال */
-        #phone {
-            top: 1032px;
-            left: 1697px;
-            width: 1207px;
-            height: 94px;
-            font-size: 35px;
-            padding: 10px;
-        }
-    
-        /* إعدادات حقل بداية العقد */
-        #start-date {
-            top: 1151px;
-            left: 1697px;
-            width: 1207px;
-            height: 94px;
-        }
-    
-        /* إعدادات حقل الإيجار الشهري */
-        #monthly-rent {
-            top: 1273px;
-            left: 1697px;
-            width: 1207px;
-            height: 94px;
-            font-size: 35px;
-            padding: 10px;
-        }
-    
-        /* إعدادات حقل عدد الأشهر */
-        #months {
-            top: 1393px;
-            left: 1697px;
-            width: 1207px;
-            height: 94px;
-            font-size: 35px;
-            padding: 10px;
-        }
-    
-        /* إعدادات حقل الإجمالي */
-        #total {
-            top: 1514px;
-            left: 1697px;
-            width: 1207px;
-            height: 94px;
-            font-size: 35px;
-            padding: 10px;
-            background-color: rgba(230, 230, 230, 0.8); /* لجعل الحقل مميز */
-            pointer-events: none; /* لمنع المستخدم من التعديل عليه */
-        }
-    
-        /* إعدادات حقل المبلغ المدفوع */
-        #amount-paid {
-            top: 1633px;
-            left: 2330px;
-            width: 575px;
-            height: 96px;
-            font-size: 35px;
-            padding: 10px;
-        }
-    
-        /* إعدادات حقل "مبلغا وقدره" الجديد */
-        #amount-in-words {
-            top: 1633px;
-            left: 395px;
-            width: 1561px;
-            height: 96px;
-            font-size: 35px;
-            padding: 10px;
-        }
-    
-        #transfer {
-            top: 1633px;
-            left: 395px;
-            width: 300px;
-            height: 96px;
-            font-size: 35px;
-            padding: 10px;
-        }
-    
-        #search-form {
-            position: absolute;
-            top: 2500px; /* تعديل المسافة من الأعلى حسب الحاجة */
-            z-index: 20;
-            background-color: rgba(255, 255, 255, 0.9);
-            padding: 20px;
-            border: 1px solid #ddd;
-            border-radius: 10px;
-        }
-        
-        #search-form button {
-            position: relative;
-            left: 0px;
-            top: 10px;
-            background-color: #007BFF;
-            color: #fff;
-            padding: 15px 30px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 18px;
-        }
-    
-        #search-form button:hover {
-            background-color: #0056b3;
-        }        
-    
-        button[type="submit"] {
-            position: absolute;
-            bottom: 50px;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 30px 50px;
-            font-size: 35px;
-            background-color: #007BFF;
-            color: #fff;
-            border: none;
-            cursor: pointer;
-            border-radius: 5px;
-        }
-    
-        button[type="submit"]:hover {
-            background-color: #0056b3;
-        }
-    
-      
-    </style>
-    
-</head>
-<body>
-
-    
-
-    <form action="/submit" method="POST">
-        <div class="contract">
-            <!-- حقول الإدخال -->
-            <input type="date" id="date" name="date" class="input-field"
-                   value="{{ contract['date'] if contract else '' }}">
-            <input type="text" id="contract-number" name="contract-number" class="input-field"
-                   value="{{ contract['contract_number'] if contract else '' }}">
-            <input type="text" id="nationality" name="nationality" class="input-field"
-                   value="{{ contract['nationality'] if contract else '' }}">
-            <input type="text" id="id-number" name="id-number" class="input-field"
-                   value="{{ contract['id_number'] if contract else '' }}">
-            <input type="text" id="job" name="job" class="input-field"
-                   value="{{ contract['job'] if contract else '' }}">
-            <input type="text" id="salary" name="salary" class="input-field"
-                   value="{{ contract['salary'] if contract else '' }}">
-                   <select id="marital-status" name="marital-status" class="input-field">
-                    <option value="" disabled selected>اختر الحالة الاجتماعية</option>
-                    <option value="أعزب" {% if contract and contract['marital_status'] == 'أعزب' %}selected{% endif %}>أعزب</option>
-                    <option value="متزوج" {% if contract and contract['marital_status'] == 'متزوج' %}selected{% endif %}>متزوج</option>
-                    <option value="مطلق" {% if contract and contract['marital_status'] == 'مطلق' %}selected{% endif %}>مطلق</option>
-                    <option value="أرمل" {% if contract and contract['marital_status'] == 'أرمل' %}selected{% endif %}>أرمل</option>
-                </select>                
-            <select id="jeddah-neighborhood" name="jeddah-neighborhood" class="input-field">
-                <option value="" disabled selected>اختر الحي</option>
-                <option value="الروابي" {% if contract and contract['jeddah_neighborhood'] == 'الروابي' %}selected{% endif %}>الروابي</option>
-                <option value="بني مالك 4" {% if contract and contract['jeddah_neighborhood'] == 'بني مالك 4' %}selected{% endif %}>بني مالك 4</option>
-            </select>
-            <input type="text" id="apartment-number" name="apartment-number" class="input-field"
-                   value="{{ contract['apartment_number'] if contract else '' }}">
-            <input type="text" id="client-name" name="client-name" class="input-field"
-                   value="{{ contract['client_name'] if contract else '' }}">
-            <select id="id-type" name="id-type" class="input-field">
-                <option value="" disabled selected>اختر نوع الإثبات</option>
-                <option value="بطاقة أحوال" {% if contract and contract['id_type'] == 'بطاقة أحوال' %}selected{% endif %}>بطاقة أحوال</option>
-                <option value="هوية مقيم" {% if contract and contract['id_type'] == 'هوية مقيم' %}selected{% endif %}>هوية مقيم</option>
-                <option value="جواز سفر" {% if contract and contract['id_type'] == 'جواز سفر' %}selected{% endif %}>جواز سفر</option>
-            </select>
-            <input type="date" id="end-date" name="end-date" class="input-field"
-                   value="{{ contract['end_date'] if contract else '' }}">
-            <input type="date" id="end-contract" name="end-contract" class="input-field"
-                   value="{{ contract['end_contract'] if contract else '' }}">
-            <input type="text" id="insurance-paid" name="insurance-paid" class="input-field"
-                   value="{{ contract['insurance_paid'] if contract else '' }}">
-            <input type="text" id="rent-fee" name="rent-fee" class="input-field"
-                   value="{{ contract['rent_fee'] if contract else '' }}">
-            <select id="maintenance-fee" name="maintenance-fee" class="input-field">
-                <option value="" disabled selected>اختر المسؤول عن النفقة</option>
-                <option value="المالك" {% if contract and contract['maintenance_fee'] == 'المالك' %}selected{% endif %}>المالك</option>
-                <option value="المستأجر" {% if contract and contract['maintenance_fee'] == 'المستأجر' %}selected{% endif %}>المستأجر</option>
-            </select>
-            <select id="owner-signature" name="owner-signature" class="input-field">
-                <option value="" disabled selected>اختر توقيع المالك</option>
-                <option value="عبدالقادر بن عفيف" {% if contract and contract['owner_signature'] == 'عبدالقادر بن عفيف' %}selected{% endif %}>عبدالقادر بن عفيف</option>
-                <option value="أسماء عبدالقادر" {% if contract and contract['owner_signature'] == 'أسماء عبدالقادر' %}selected{% endif %}>أسماء عبدالقادر</option>
-            </select>
-            <input type="text" id="phone" name="phone" class="input-field"
-                   value="{{ contract['phone'] if contract else '' }}">
-            <input type="date" id="start-date" name="start-date" class="input-field"
-                   value="{{ contract['start_date'] if contract else '' }}">
-            
-                        <!-- قيمة الإيجار -->
-            <input type="number" id="monthly-rent" name="monthly-rent" class="input-field"
-            value="{{ contract['monthly_rent'] if contract else '' }}">
-
-           
-
-            <!-- المدة -->
-            <input type="text" id="duration" name="duration" class="input-field"
-            style="top: 1393px; left: 1697px; width: 1207px; height: 94px; font-size: 35px; padding: 10px;"
-            value="{{ contract['duration'] if contract else 'شهر' }}">
-
-
-            <input type="text" id="total" name="total" class="input-field" readonly
-                   value="{{ contract['total'] if contract else '' }}">
-            <input type="number" id="amount-paid" name="amount-paid" class="input-field"
-                   value="{{ contract['amount_paid'] if contract else '' }}">
-            <input type="text" id="amount-in-words" name="amount-in-words" class="input-field"
-                   value="{{ contract['amount_in_words'] if contract else '' }}">
-            <select id="transfer" name="transfer" class="input-field">
-                <option value="" disabled selected>اختر نوع التحويل</option>
-                <option value="تحويل بنكي" {% if contract and contract['transfer'] == 'تحويل بنكي' %}selected{% endif %}>تحويل بنكي</option>
-                <option value="نقدي" {% if contract and contract['transfer'] == 'نقدي' %}selected{% endif %}>نقدي</option>
-            </select>
-            <!-- زر الإرسال -->
-            <button type="submit">إرسال</button>
-        </div>
-    </form>
-    
-        
-    <script>
-        // حساب الإجمالي بناءً على المدخلات
-        
-            const rentTypeField = document.getElementById('rent-type');
-            const rentAmountField = document.getElementById('monthly-rent'); // المبلغ المدخل (شهري/أسبوعي/يومي)
-            const durationField = document.getElementById('duration'); // المدة: شهور أو أسابيع أو أيام
-            const totalField = document.getElementById('total');
-        
-            function updateTotal() {
-                const rent = parseFloat(rentAmountField.value) || 0;
-                const duration = parseFloat(durationField.value) || 0;
-                const rentType = rentTypeField.value;
-        
-                let total = 0;
-                if (rentType === "شهري") {
-                    total = rent * duration;
-                } else if (rentType === "أسبوعي") {
-                    total = rent * duration;
-                } else if (rentType === "يومي") {
-                    total = rent * duration;
-                }
-        
-                totalField.value = total.toFixed(2);
-            }
-        
-            // نحدث القيمة عند التغيير
-            rentTypeField.addEventListener('change', updateTotal);
-            rentAmountField.addEventListener('input', updateTotal);
-            durationField.addEventListener('input', updateTotal);
-    </script>
-        
-        
-
-    <form id="search-form" method="POST" action="/search-contract">
-        {% if error %}
-        <p id="error-message" style="color: red;">{{ error }}</p>
+{% macro select_field(name, label, options, current, placeholder, required=false) %}
+<div class="field">
+    <label for="{{ name }}">{{ label }}</label>
+    <select id="{{ name }}" name="{{ name }}" {% if required %}required{% endif %}>
+        <option value="" disabled {% if not current %}selected{% endif %}>{{ placeholder }}</option>
+        {% for o in options %}
+        <option value="{{ o }}" {% if current == o %}selected{% endif %}>{{ o }}</option>
+        {% endfor %}
+        {% if current and current not in options %}
+        <option value="{{ current }}" selected>{{ current }}</option>
         {% endif %}
-        <label for="apartment-number">رقم الشقة:</label>
-        <input type="text" id="apartment-number" name="apartment-number" placeholder="أدخل رقم الشقة">
-        <label for="jeddah-neighborhood">الحي:</label>
-        <select id="jeddah-neighborhood" name="jeddah-neighborhood">
-            <option value="" disabled selected>اختر الحي</option>
-            <option value="الروابي">الروابي</option>
-            <option value="بني مالك 4">بني مالك 4</option>
-        </select>
-        <button type="submit">بحث</button>
-    </form>
-    
-    <script>
-        function convertNumberToArabicWords(number) {
-            const arabicNumbers = [
-                '', 'واحد', 'اثنان', 'ثلاثة', 'أربعة', 'خمسة', 'ستة', 'سبعة', 'ثمانية', 'تسعة', 'عشرة',
-                'أحد عشر', 'اثنا عشر', 'ثلاثة عشر', 'أربعة عشر', 'خمسة عشر', 'ستة عشر', 'سبعة عشر', 'ثمانية عشر', 'تسعة عشر', 'عشرون'
-            ];
-            const tens = ['', '', 'عشرون', 'ثلاثون', 'أربعون', 'خمسون', 'ستون', 'سبعون', 'ثمانون', 'تسعون'];
-            const hundreds = ['', 'مئة', 'مئتان', 'ثلاثمئة', 'أربعمئة', 'خمسمئة', 'ستمئة', 'سبعمئة', 'ثمانمئة', 'تسعمئة'];
-        
-            if (number === 0) return 'صفر ريال';
-        
-            let words = '';
-            let num = parseInt(number);
-        
-            // التعامل مع الألوف
-            if (num >= 1000) {
-                const thousands = Math.floor(num / 1000);
-                if (thousands === 1) {
-                    words += 'ألف';
-                } else if (thousands === 2) {
-                    words += 'ألفان';
-                } else if (thousands <= 10) {
-                    words += arabicNumbers[thousands] + ' آلاف';
-                } else {
-                    words += convertNumberToArabicWords(thousands) + ' ألف';
-                }
-                num %= 1000;
-        
-                // إضافة "و" إذا تبقى مئات أو أقل
-                if (num > 0) {
-                    words += ' و';
-                }
-            }
-        
-            // المئات
-            if (num >= 100) {
-                words += hundreds[Math.floor(num / 100)];
-                num %= 100;
-        
-                // إضافة "و" إذا تبقى عشرات أو وحدات
-                if (num > 0) {
-                    words += ' و';
-                }
-            }
-        
-            // العشرات
-            if (num >= 20) {
-                words += tens[Math.floor(num / 10)];
-                num %= 10;
-        
-                // إضافة "و" إذا تبقى وحدات
-                if (num > 0) {
-                    words += ' و';
-                }
-            }
-        
-            // الوحدات
-            if (num > 0) {
-                words += arabicNumbers[num];
-            }
-        
-            // إضافة "ريالًا" مع التنوين
-            return words.trim() + ' ريال';
-        }
-        
-        // تحديث حقل "مبلغ وقدره"
-        const amountPaidField = document.getElementById('amount-paid');
-        const amountInWordsField = document.getElementById('amount-in-words');
-        
-        amountPaidField.addEventListener('input', function () {
-            const amount = parseFloat(amountPaidField.value) || 0;
-            amountInWordsField.value = convertNumberToArabicWords(amount);
-        });
-        
-    </script>
+    </select>
+</div>
+{% endmacro %}
 
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            const rentInput = document.getElementById("monthly-rent");
-            const totalInput = document.getElementById("total");
-        
-            if (rentInput && totalInput) {
-                rentInput.addEventListener("input", function () {
-                    totalInput.value = rentInput.value;
-                });
-        
-                // لو في قيمة موجودة مسبقًا، تنعرض تلقائيًا
-                totalInput.value = rentInput.value;
-            }
-        });
-        </script>
-        
-    <div class="container">
-        <div class="py-5 text-center">
-            <h2>Bootstrap Hijri Date Picker v1.0.0</h2>
-            <p class="lead">
+{% macro text_field(name, label, value, type='text', hint='', required=false, extra='') %}
+<div class="field">
+    <label for="{{ name }}">{{ label }}</label>
+    <input type="{{ type }}" id="{{ name }}" name="{{ name }}" value="{{ value or '' }}" {% if required %}required{% endif %} {{ extra|safe }}>
+    {% if hint %}<p class="hint">{{ hint }}</p>{% endif %}
+</div>
+{% endmacro %}
 
-            </p>
+{% block content %}
+
+{% if contract %}
+    <h1>عقد رقم {{ contract.contract_number }}</h1>
+    <p class="hint">شقة {{ contract.apartment_number }} - {{ contract.jeddah_neighborhood }}. أي تعديل هنا ينحفظ على نفس العقد ويطلع لك العقد من جديد.</p>
+{% else %}
+    <h1>عقد جديد{% if c.apartment_number %} - شقة {{ c.apartment_number }}{% endif %}</h1>
+{% endif %}
+
+{% if error %}<div class="alert alert-error">{{ error }}</div>{% endif %}
+{% if notice %}<div class="alert alert-info">{{ notice }}</div>{% endif %}
+
+{% if not contract and not c.apartment_number %}
+<form class="card" method="POST" action="{{ url_for('search_contract') }}">
+    <h2>تبي تفتح عقد شقة موجود؟</h2>
+    <div class="fields">
+        <div class="field">
+            <label for="search-apartment">رقم الشقة</label>
+            <input type="text" id="search-apartment" name="apartment-number" placeholder="مثال: 101">
         </div>
-
-        <div class="row">
-            <div class="col-md-6">
-
-                <div class="form-group">
-                    <label>
-                        Default Hijir
-                    </label>
-                    <input id="hijri-picker" type="text" class="form-control" />
-                </div>
-            </div>
+        <div class="field">
+            <label for="search-neighborhood">الحي</label>
+            <select id="search-neighborhood" name="jeddah-neighborhood">
+                <option value="" disabled selected>اختر الحي</option>
+                {% for n in neighborhoods %}<option value="{{ n }}">{{ n }}</option>{% endfor %}
+            </select>
+        </div>
+        <div class="field" style="align-self:end">
+            <button type="submit" class="btn btn-light" style="width:100%;min-height:52px">افتح العقد</button>
         </div>
     </div>
-    
-</body>
-</html>
+</form>
+{% endif %}
+
+<form action="{{ url_for('submit') }}" method="POST" id="contract-form">
+    <input type="hidden" name="contract-number" value="{{ c.contract_number or '' }}">
+
+    <section class="card">
+        <h2>١. الشقة</h2>
+        <div class="fields">
+            {{ select_field('jeddah-neighborhood', 'الحي', neighborhoods, c.jeddah_neighborhood, 'اختر الحي', required=true) }}
+            {{ text_field('apartment-number', 'رقم الشقة', c.apartment_number, required=true) }}
+            {{ text_field('date', 'تاريخ السند', c.date, type='date') }}
+        </div>
+    </section>
+
+    <section class="card">
+        <h2>٢. المستأجر</h2>
+        <div class="fields">
+            {{ text_field('client-name', 'اسم العميل', c.client_name) }}
+            {{ text_field('phone', 'الجوال', c.phone, type='tel', extra='inputmode="tel"') }}
+            {{ text_field('nationality', 'الجنسية', c.nationality) }}
+            {{ select_field('id-type', 'نوع الإثبات', ['بطاقة أحوال', 'هوية مقيم', 'جواز سفر'], c.id_type, 'اختر نوع الإثبات') }}
+            {{ text_field('id-number', 'رقم الإثبات', c.id_number, extra='inputmode="numeric"') }}
+            {{ text_field('end-date', 'تاريخ انتهاء الإثبات', c.end_date, type='date') }}
+            {{ text_field('job', 'العمل', c.job) }}
+            {{ text_field('salary', 'الراتب', c.salary, extra='inputmode="numeric"') }}
+            {{ select_field('marital-status', 'الحالة الاجتماعية', ['أعزب', 'متزوج', 'مطلق', 'أرمل'], c.marital_status, 'اختر الحالة الاجتماعية') }}
+        </div>
+    </section>
+
+    <section class="card">
+        <h2>٣. مدة العقد</h2>
+        <div class="fields">
+            {{ text_field('start-date', 'بداية العقد', c.start_date, type='date') }}
+            {{ text_field('end-contract', 'نهاية العقد', c.end_contract, type='date') }}
+            {{ text_field('duration', 'مدة الإيجار', c.months or 'شهر', hint='مثال: شهر، شهرين، أسبوع') }}
+        </div>
+    </section>
+
+    <section class="card">
+        <h2>٤. المبالغ</h2>
+        <div class="fields">
+            {{ text_field('monthly-rent', 'مبلغ الإيجار', c.monthly_rent, type='number', extra='inputmode="decimal" min="0" step="any"') }}
+            {{ text_field('total', 'الإجمالي', c.total, extra='readonly', hint='ينحسب تلقائي من مبلغ الإيجار') }}
+            {{ text_field('amount-paid', 'المبلغ المدفوع', c.amount_paid, type='number', extra='inputmode="decimal" min="0" step="any"') }}
+            {{ text_field('amount-in-words', 'مبلغاً وقدره', c.amount_in_words, hint='ينكتب تلقائي لما تكتب المبلغ المدفوع') }}
+            {{ select_field('transfer', 'طريقة الدفع', ['تحويل بنكي', 'نقدي'], c.transfer, 'اختر طريقة الدفع') }}
+            {{ text_field('insurance-paid', 'التأمين المدفوع', c.insurance_paid, extra='inputmode="decimal"') }}
+        </div>
+    </section>
+
+    <section class="card">
+        <h2>٥. الشروط والتوقيع</h2>
+        <div class="fields">
+            {{ text_field('rent-fee', 'أجرة التأخير عن موعد الخروج (ريال يومياً)', c.rent_fee, extra='inputmode="decimal"') }}
+            {{ select_field('maintenance-fee', 'الكهرباء على نفقة', ['المالك', 'المستأجر'], c.maintenance_fee, 'اختر') }}
+            {{ select_field('owner-signature', 'توقيع المالك', ['عبدالقادر بن عفيف', 'أسماء عبدالقادر'], c.owner_signature, 'اختر توقيع المالك') }}
+        </div>
+    </section>
+
+    <button type="submit" class="btn btn-accent btn-block">حفظ العقد وتحميله PDF</button>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // تاريخ السند: إذا فاضي يتعبى بتاريخ اليوم
+    const dateField = document.getElementById('date');
+    if (dateField && !dateField.value) {
+        const now = new Date();
+        const pad = n => String(n).padStart(2, '0');
+        dateField.value = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+    }
+
+    // الإجمالي = مبلغ الإيجار (نفس طريقة البرنامج القديم)
+    const rentInput = document.getElementById('monthly-rent');
+    const totalInput = document.getElementById('total');
+    if (rentInput && totalInput) {
+        rentInput.addEventListener('input', () => { totalInput.value = rentInput.value; });
+        if (rentInput.value && !totalInput.value) totalInput.value = rentInput.value;
+    }
+
+    function convertNumberToArabicWords(number) {
+        const arabicNumbers = [
+            '', 'واحد', 'اثنان', 'ثلاثة', 'أربعة', 'خمسة', 'ستة', 'سبعة', 'ثمانية', 'تسعة', 'عشرة',
+            'أحد عشر', 'اثنا عشر', 'ثلاثة عشر', 'أربعة عشر', 'خمسة عشر', 'ستة عشر', 'سبعة عشر', 'ثمانية عشر', 'تسعة عشر', 'عشرون'
+        ];
+        const tens = ['', '', 'عشرون', 'ثلاثون', 'أربعون', 'خمسون', 'ستون', 'سبعون', 'ثمانون', 'تسعون'];
+        const hundreds = ['', 'مئة', 'مئتان', 'ثلاثمئة', 'أربعمئة', 'خمسمئة', 'ستمئة', 'سبعمئة', 'ثمانمئة', 'تسعمئة'];
+
+        if (number === 0) return 'صفر ريال';
+
+        let words = '';
+        let num = parseInt(number);
+
+        if (num >= 1000) {
+            const thousands = Math.floor(num / 1000);
+            if (thousands === 1) {
+                words += 'ألف';
+            } else if (thousands === 2) {
+                words += 'ألفان';
+            } else if (thousands <= 10) {
+                words += arabicNumbers[thousands] + ' آلاف';
+            } else {
+                words += convertNumberToArabicWords(thousands).replace(' ريال', '') + ' ألف';
+            }
+            num %= 1000;
+            if (num > 0) words += ' و';
+        }
+
+        if (num >= 100) {
+            words += hundreds[Math.floor(num / 100)];
+            num %= 100;
+            if (num > 0) words += ' و';
+        }
+
+        if (num >= 20) {
+            // بالعربي الآحاد قبل العشرات: خمسة وعشرون
+            const unit = num % 10;
+            words += unit > 0 ? arabicNumbers[unit] + ' و' + tens[Math.floor(num / 10)] : tens[Math.floor(num / 10)];
+            num = 0;
+        }
+
+        if (num > 0) {
+            words += arabicNumbers[num];
+        }
+
+        return words.trim() + ' ريال';
+    }
+
+    const amountPaidField = document.getElementById('amount-paid');
+    const amountInWordsField = document.getElementById('amount-in-words');
+    amountPaidField.addEventListener('input', function () {
+        const amount = parseFloat(amountPaidField.value) || 0;
+        amountInWordsField.value = convertNumberToArabicWords(amount);
+    });
+</script>
+{% endblock %}

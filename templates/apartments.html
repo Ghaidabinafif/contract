@@ -1,125 +1,69 @@
-<!DOCTYPE html>
-<html lang="ar">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>حالة الشقق</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            direction: rtl;
-            text-align: center;
-        }
-        table {
-            width: 80%;
-            margin: auto;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 10px;
-            text-align: center;
-        }
-        th {
-            background-color: #f4f4f4;
-        }
-        .active {
-            background-color: lightgreen !important;
-        }
-        .expired {
-            background-color: lightcoral !important;
-        }
-        .unknown {
-            background-color: lightgray !important;
-        }
-        .due {
-            background-color: orange !important;
-        }
-        .not-started {
-            background-color:rgb(124, 187, 255) !important;
-        }
-    </style>
-</head>
-<body>
+{% extends 'base.html' %}
+{% block title %}الشقق - أملاك عبدالقادر عفيف{% endblock %}
 
-    <h1>حالة الشقق - الروابي</h1>
-    <table>
-        <thead>
-            <tr>
-                <th>رقم الشقة</th>
-                <th>تاريخ نهاية العقد</th>
-                <th>رقم الشقة</th>
-                <th>تاريخ نهاية العقد</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% set apt_keys = al_rawabi.keys()|list %}
-            {% for i in range(0, apt_keys|length // 2) %}
-            <tr>
-                {% set apt1 = al_rawabi[apt_keys[i]] %}
-                <td class="{% if apt1.status == 'لم يبدأ' %}not-started{% elif apt1.due and apt1.status == 'فعال' %}due{% elif apt1.status == 'فعال' %}active{% elif apt1.status == 'منتهي' %}expired{% else %}unknown{% endif %}">
-                    {{ apt_keys[i] }}
-                </td>
-                <td class="{% if apt1.status == 'لم يبدأ' %}not-started{% elif apt1.due and apt1.status == 'فعال' %}due{% elif apt1.status == 'فعال' %}active{% elif apt1.status == 'منتهي' %}expired{% else %}unknown{% endif %}">
-                    {{ apt1.end_contract if 'end_contract' in apt1 else 'غير مسجل' }}
-                </td>
+{% block content %}
+<div class="building-tabs">
+    {% for b in buildings %}
+    <button type="button" data-target="b-{{ b.key }}" class="{% if loop.first %}on{% endif %}">
+        {{ b.name }} <span class="count">({{ b.units|length }})</span>
+    </button>
+    {% endfor %}
+</div>
 
-                {% set second_index = i + (apt_keys|length // 2) %}
-                {% if second_index < apt_keys|length %}
-                    {% set apt2 = al_rawabi[apt_keys[second_index]] %}
-                    <td class="{% if apt2.status == 'لم يبدأ' %}not-started{% elif apt2.due and apt2.status == 'فعال' %}due{% elif apt2.status == 'فعال' %}active{% elif apt2.status == 'منتهي' %}expired{% else %}unknown{% endif %}">
-                        {{ apt_keys[second_index] }}
-                    </td>
-                    <td class="{% if apt2.status == 'لم يبدأ' %}not-started{% elif apt2.due and apt2.status == 'فعال' %}due{% elif apt2.status == 'فعال' %}active{% elif apt2.status == 'منتهي' %}expired{% else %}unknown{% endif %}">
-                        {{ apt2.end_contract if 'end_contract' in apt2 else 'غير مسجل' }}
-                    </td>
-                {% else %}
-                    <td></td><td></td>
-                {% endif %}
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+{% for b in buildings %}
+<section class="building {% if not loop.first %}hidden{% endif %}" id="b-{{ b.key }}">
+    <h1>شقق {{ b.name }}</h1>
 
-    <h1>حالة الشقق - بني مالك 4</h1>
-    <table>
-        <thead>
-            <tr>
-                <th>رقم الشقة</th>
-                <th>تاريخ نهاية العقد</th>
-                <th>رقم الشقة</th>
-                <th>تاريخ نهاية العقد</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% set apt_keys = bin_malik_4.keys()|list %}
-            {% for i in range(0, apt_keys|length // 2) %}
-            <tr>
-                {% set apt1 = bin_malik_4[apt_keys[i]] %}
-                <td class="{% if apt1.status == 'لم يبدأ' %}not-started{% elif apt1.due and apt1.status == 'فعال' %}due{% elif apt1.status == 'فعال' %}active{% elif apt1.status == 'منتهي' %}expired{% else %}unknown{% endif %}">
-                    {{ apt_keys[i] }}
-                </td>
-                <td class="{% if apt1.status == 'لم يبدأ' %}not-started{% elif apt1.due and apt1.status == 'فعال' %}due{% elif apt1.status == 'فعال' %}active{% elif apt1.status == 'منتهي' %}expired{% else %}unknown{% endif %}">
-                    {{ apt1.end_contract if 'end_contract' in apt1 else 'غير مسجل' }}
-                </td>
+    <div class="legend">
+        <button type="button" class="chip chip-all on" data-filter="all">الكل <span class="n">{{ b.units|length }}</span></button>
+        {% for s in statuses %}
+        <button type="button" class="chip st-{{ s.key }} {% if not b.counts[s.key] %}zero{% endif %}" data-filter="{{ s.key }}">
+            <span class="dot"></span>{{ s.label }} <span class="n">{{ b.counts[s.key] }}</span>
+        </button>
+        {% endfor %}
+    </div>
+    <p class="hint">اضغط على أي حالة عشان تشوف شققها بس، واضغط على الشقة عشان تفتح عقدها.</p>
 
-                {% set second_index = i + (apt_keys|length // 2) %}
-                {% if second_index < apt_keys|length %}
-                    {% set apt2 = bin_malik_4[apt_keys[second_index]] %}
-                    <td class="{% if apt2.status == 'لم يبدأ' %}not-started{% elif apt2.due and apt2.status == 'فعال' %}due{% elif apt2.status == 'فعال' %}active{% elif apt2.status == 'منتهي' %}expired{% else %}unknown{% endif %}">
-                        {{ apt_keys[second_index] }}
-                    </td>
-                    <td class="{% if apt2.status == 'لم يبدأ' %}not-started{% elif apt2.due and apt2.status == 'فعال' %}due{% elif apt2.status == 'فعال' %}active{% elif apt2.status == 'منتهي' %}expired{% else %}unknown{% endif %}">
-                        {{ apt2.end_contract if 'end_contract' in apt2 else 'غير مسجل' }}
-                    </td>
-                {% else %}
-                    <td></td><td></td>
-                {% endif %}
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="apt-grid">
+        {% for u in b.units %}
+        <a class="apt st-{{ u.st.key }}" data-status="{{ u.st.key }}"
+           href="{{ url_for('contract_page', apartment=u.number, neighborhood=b.neighborhood) }}">
+            <span class="num">{{ u.display }}</span>
+            <span class="label">{{ u.st.icon }} {{ u.st.label }}</span>
+            {% if u.client_name %}<span class="who">{{ u.client_name }}</span>{% endif %}
+            {% if u.st.days_text %}<span class="meta">{{ u.st.days_text }}</span>{% endif %}
+        </a>
+        {% endfor %}
+    </div>
+</section>
+{% endfor %}
+{% endblock %}
 
-</body>
-</html>
+{% block scripts %}
+<script>
+    // التنقل بين العمارتين
+    const tabButtons = document.querySelectorAll('.building-tabs button');
+    function showBuilding(id) {
+        document.querySelectorAll('.building').forEach(s => s.classList.toggle('hidden', s.id !== id));
+        tabButtons.forEach(b => b.classList.toggle('on', b.dataset.target === id));
+        try { localStorage.setItem('afif-building', id); } catch (e) {}
+    }
+    tabButtons.forEach(b => b.addEventListener('click', () => showBuilding(b.dataset.target)));
+    try {
+        const saved = localStorage.getItem('afif-building');
+        if (saved && document.getElementById(saved)) showBuilding(saved);
+    } catch (e) {}
+
+    // الفلترة حسب الحالة
+    document.querySelectorAll('.building').forEach(section => {
+        const chips = section.querySelectorAll('.chip');
+        chips.forEach(chip => chip.addEventListener('click', () => {
+            const f = chip.dataset.filter;
+            chips.forEach(c => c.classList.toggle('on', c === chip));
+            section.querySelectorAll('.apt').forEach(a => {
+                a.classList.toggle('hidden', f !== 'all' && a.dataset.status !== f);
+            });
+        }));
+    });
+</script>
+{% endblock %}

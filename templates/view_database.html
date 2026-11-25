@@ -1,150 +1,96 @@
-<!DOCTYPE html>
-<html lang="ar">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>قاعدة بيانات العقود</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            direction: rtl;
-            text-align: center;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 10px;
-            text-align: center;
-        }
-        th {
-            background-color: #f4f4f4;
-        }
-        form {
-            display: inline;
-        }
-        .delete-btn {
-            background-color: red;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            cursor: pointer;
-        }
-        .delete-btn:hover {
-            background-color: darkred;
-        }
-    </style>
-    <script>
-        function deleteContract(contractNumber) {
-            if (!confirm('هل أنت متأكد من حذف هذا العقد؟')) return;
+{% extends 'base.html' %}
+{% block title %}كل العقود - أملاك عبدالقادر عفيف{% endblock %}
 
-            fetch('/delete-contract', {
+{% block content %}
+<h1>كل العقود <span class="muted" style="font-size:20px">({{ total }})</span></h1>
+
+<form class="search" method="POST" action="{{ url_for('view_database') }}">
+    <input type="search" name="search-query" value="{{ query }}" placeholder="ابحث بالاسم أو رقم الشقة أو الجوال أو الحالة">
+    <button type="submit" class="btn btn-primary">بحث</button>
+    {% if query %}<a class="btn btn-light" href="{{ url_for('view_database') }}">مسح</a>{% endif %}
+</form>
+
+{% if query %}<p class="hint">نتائج البحث عن "{{ query }}": {{ contracts|length }}</p>
+{% else %}<p class="hint"><a href="{{ url_for('import_contracts') }}" style="color:var(--accent);font-weight:700">النسخة الاحتياطية: تحميل أو استرجاع</a></p>{% endif %}
+
+{% for c in contracts %}
+<article class="card contract-card">
+    <div class="top">
+        <div>
+            <div class="name">{{ c.client_name or 'بدون اسم' }}</div>
+            <div class="muted">شقة {{ c.apartment_number }} · {{ c.jeddah_neighborhood }} · عقد رقم {{ c.contract_number }}</div>
+        </div>
+        <span class="badge st-{{ c.st.key }}">{{ c.st.icon }} {{ c.st.label }}</span>
+    </div>
+
+    <div class="facts">
+        <div><span>بداية العقد</span><b>{{ c.start_date|dmy }}</b></div>
+        <div><span>نهاية العقد</span><b>{{ c.end_contract|dmy }}</b></div>
+        <div><span>الإيجار</span><b>{{ c.monthly_rent or '—' }}</b></div>
+        <div><span>المدفوع</span><b>{{ c.amount_paid or '—' }}</b></div>
+    </div>
+    {% if c.st.days_text %}<p class="hint" style="margin-top:0">{{ c.st.days_text }}</p>{% endif %}
+
+    <div class="actions">
+        <a class="btn btn-primary" href="{{ url_for('contract_page', apartment=c.apartment_number, neighborhood=c.jeddah_neighborhood) }}">فتح العقد</a>
+        {% if c.phone %}<a class="btn btn-light" href="tel:{{ c.phone }}">اتصال</a>{% endif %}
+        <button type="button" class="btn btn-danger delete-btn" data-number="{{ c.contract_number }}" data-name="{{ c.client_name or '' }}">حذف</button>
+    </div>
+
+    <details>
+        <summary>باقي التفاصيل</summary>
+        <dl class="details">
+            <dt>تاريخ السند</dt><dd>{{ c.date|dmy }}</dd>
+            <dt>الجنسية</dt><dd>{{ c.nationality or '—' }}</dd>
+            <dt>نوع الإثبات</dt><dd>{{ c.id_type or '—' }}</dd>
+            <dt>رقم الإثبات</dt><dd>{{ c.id_number or '—' }}</dd>
+            <dt>انتهاء الإثبات</dt><dd>{{ c.end_date|dmy }}</dd>
+            <dt>العمل</dt><dd>{{ c.job or '—' }}</dd>
+            <dt>الراتب</dt><dd>{{ c.salary or '—' }}</dd>
+            <dt>الحالة الاجتماعية</dt><dd>{{ c.marital_status or '—' }}</dd>
+            <dt>الجوال</dt><dd>{{ c.phone or '—' }}</dd>
+            <dt>مدة الإيجار</dt><dd>{{ c.months or '—' }}</dd>
+            <dt>الإجمالي</dt><dd>{{ c.total or '—' }}</dd>
+            <dt>مبلغاً وقدره</dt><dd>{{ c.amount_in_words or '—' }}</dd>
+            <dt>طريقة الدفع</dt><dd>{{ c.transfer or '—' }}</dd>
+            <dt>التأمين المدفوع</dt><dd>{{ c.insurance_paid or '—' }}</dd>
+            <dt>أجرة التأخير</dt><dd>{{ c.rent_fee or '—' }}</dd>
+            <dt>الكهرباء على</dt><dd>{{ c.maintenance_fee or '—' }}</dd>
+            <dt>توقيع المالك</dt><dd>{{ c.owner_signature or '—' }}</dd>
+        </dl>
+    </details>
+</article>
+{% else %}
+<div class="card">
+    {% if query %}ما فيه عقود تطابق "{{ query }}".{% else %}ما فيه عقود مسجلة.{% endif %}
+</div>
+{% endfor %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const number = btn.dataset.number;
+            const name = btn.dataset.name;
+            if (!confirm(`متأكد تبي تحذف عقد رقم ${number}${name ? ' (' + name + ')' : ''}؟ ما يرجع بعد الحذف.`)) return;
+
+            fetch('{{ url_for("delete_contract") }}', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: new URLSearchParams({ 'contract-number': contractNumber })
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ 'contract-number': number })
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
                     alert(data.success);
-                    location.reload(); // إعادة تحميل الصفحة لتحديث القائمة
+                    location.reload();
                 } else {
                     alert(data.error);
                 }
             })
             .catch(error => console.error('Error:', error));
-        }
-    </script>
-</head>
-<body>
-    <h1>قاعدة بيانات العقود</h1>
-
-    <!-- نموذج البحث -->
-    <form method="POST" action="/view-database">
-        <label for="search-query">بحث:</label>
-        <input type="text" id="search-query" name="search-query" placeholder="أدخل الاسم أو رقم الشقة أو الحي" value="{{ request.form.get('search-query', '') }}">
-        <button type="submit">بحث</button>
-    </form>
-
-    <!-- عرض العقود -->
-    <table>
-        <thead>
-            <tr>
-                <th>اسم العميل</th>
-                <th>تاريخ</th>
-                <th>رقم العقد</th>
-                <th>الجنسية</th>
-                <th>رقم الهوية</th>
-                <th>نوع الهوية</th>
-                <th>الوظيفة</th>
-                <th>الراتب</th>
-                <th>الحالة الاجتماعية</th>
-                <th>رقم الشقة</th>
-                <th>تاريخ البدء</th>
-                <th>نهاية العقد</th>
-                <th>حالة العقد</th>
-                <th>الحي</th>
-                <th>نوع التحويل</th>
-                <th>تاريخ الانتهاء</th>
-                <th>التأمين المدفوع</th>
-                <th>أجرة</th>
-                <th>نفقة</th>
-                <th>توقيع المالك</th>
-                <th>الهاتف</th>
-                <th>الإيجار الشهري</th>
-                <th>عدد الأشهر</th>
-                <th>الإجمالي</th>
-                <th>المبلغ المدفوع</th>
-                <th>المبلغ كتابةً</th>
-                <th>إجراء</th> <!-- عمود جديد للحذف -->
-            </tr>
-        </thead>
-        <tbody>
-            {% if contracts %}
-                {% for contract in contracts %}
-                <tr>
-                    <td>{{ contract['client_name'] }}</td>
-                    <td>{{ contract['date'] }}</td>
-                    <td>{{ contract['contract_number'] }}</td>
-                    <td>{{ contract['nationality'] }}</td>
-                    <td>{{ contract['id_number'] }}</td>
-                    <td>{{ contract['id_type'] }}</td>
-                    <td>{{ contract['job'] }}</td>
-                    <td>{{ contract['salary'] }}</td>
-                    <td>{{ contract['marital_status'] }}</td>
-                    <td>{{ contract['apartment_number'] }}</td>
-                    <td>{{ contract['start_date'] }}</td>
-                    <td>{{ contract['end_contract'] }}</td>
-                    <td>{{ get_contract_status(contract['start_date'], contract['end_contract']) }}</td>
-                    <td>{{ contract['jeddah_neighborhood'] }}</td>
-                    <td>{{ contract['transfer'] }}</td>
-                    <td>{{ contract['end_date'] }}</td>
-                    <td>{{ contract['insurance_paid'] }}</td>
-                    <td>{{ contract['rent_fee'] }}</td>
-                    <td>{{ contract['maintenance_fee'] }}</td>
-                    <td>{{ contract['owner_signature'] }}</td>
-                    <td>{{ contract['phone'] }}</td>
-                    <td>{{ contract['monthly_rent'] }}</td>
-                    <td>{{ contract['months'] }}</td>
-                    <td>{{ contract['total'] }}</td>
-                    <td>{{ contract['amount_paid'] }}</td>
-                    <td>{{ contract['amount_in_words'] }}</td>
-                    <td>
-                        <button class="delete-btn" onclick="deleteContract('{{ contract['contract_number'] }}')">حذف</button>
-                    </td>
-                </tr>
-                {% endfor %}
-            {% else %}
-                <tr>
-                    <td colspan="27">لم يتم العثور على عقود.</td>
-                </tr>
-            {% endif %}
-        </tbody>
-    </table>
-</body>
-</html>
+        });
+    });
+</script>
+{% endblock %}

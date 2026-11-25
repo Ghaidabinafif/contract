@@ -1,16 +1,115 @@
-from flask import Flask, request, render_template, jsonify, redirect, url_for, send_file
+from flask import Flask, request, render_template, jsonify, redirect, url_for, send_file, session
 from fpdf import FPDF
 import arabic_reshaper
 from bidi.algorithm import get_display
 import qrcode
-from datetime import datetime
+from datetime import datetime, timedelta
+from functools import wraps
+import csv
+import hashlib
+import io
+import os
+import tempfile
 import pytz
 import sqlite3  # لإضافة قاعدة البيانات
 
 app = Flask(__name__)
 
-PASSWORD = "asmaa"
-DB_FILE = 'contracts.db'  # اسم ملف قاعدة البيانات
+# كلمة المرور تنقرأ من متغير البيئة APP_PASSWORD (يتحط في إعدادات Render)
+# وإذا ما انحط، تبقى كلمة المرور القديمة عشان الموقع ما يوقف
+PASSWORD = os.environ.get('APP_PASSWORD', 'asmaa')
+app.secret_key = os.environ.get('SECRET_KEY') or hashlib.sha256(('afif-contracts:' + PASSWORD).encode()).hexdigest()
+app.permanent_session_lifetime = timedelta(days=30)  # يبقى مسجل دخول 30 يوم
+app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # أقصى حجم لملف الاستيراد
+
+# مكان ملف قاعدة البيانات: في Render يتحط DB_PATH=/var/data/contracts.db (على القرص الدائم) عشان ما تنمسح
+DB_FILE = os.environ.get('DB_PATH', 'contracts.db')
+if os.path.dirname(DB_FILE):
+    os.makedirs(os.path.dirname(DB_FILE), exist_ok=True)
+SA_TZ = pytz.timezone('Asia/Riyadh')
+
+# أرقام شقق العمارتين
+AL_RAWABI_APARTMENTS = [
+    "101", "102", "103", "104", "105", "106", "107", "108", "109", "110",
+    "111", "112", "113", "114", "201", "202A", "202B", "202C", "203", "204", "205", "206",
+    "207", "208", "209", "210A", "210B", "210C", "211", "212", "213", "214",
+    "301", "302", "303", "304", "305", "306", "307", "308", "309", "310",
+    "311", "312", "313", "314", "401A", "401B", "401C", "403", "404", "405", "406",
+    "407", "408", "409", "410", "411A", "411B", "411C", "412A", "412B", "412C", "413", "414", "415",
+    "416", "417", "418", "501A", "501C", "52B", "53A", "53B", "53C", "54A", "54B",
+    "54C", "55B", "511A", "511B", "511C", "57A", "57B", "57C", "58A", "58B", "58C",
+    "601", "602", "603", "604", "605", "606", "607", "608", "609", "610", "611", "612",
+    "613", "614", "615", "616", "617", "618",
+    "Shop", "2", "3", "4", "5", "6"
+]
+
+BIN_MALIK_4_APARTMENTS = [
+    "1", "2", "3", "4", "5", "6", "7", "8F", "9F",
+    "10F", "11", "12", "13", "14", "15", "16", "17",
+    "21", "22", "23", "24", "25", "26", "27",
+    "31", "32", "33", "34", "35", "36",
+    "41", "42", "43", "44", "45", "46",
+    "51", "52", "53", "54", "55", "56",
+    "61", "62", "63", "64",
+    "102", "104", "106", "108", "110", "112",
+    "202", "204", "206", "208", "210", "212", "213", "214",
+]
+
+BUILDINGS = [
+    {"key": "rawabi", "name": "الروابي", "neighborhood": "الروابي", "apartments": AL_RAWABI_APARTMENTS},
+    {"key": "banimalik", "name": "بني مالك 4", "neighborhood": "بني مالك 4", "apartments": BIN_MALIK_4_APARTMENTS},
+]
+NEIGHBORHOODS = [b["neighborhood"] for b in BUILDINGS]
+
+# حالات الشقة: كل حالة لها لون واسم ورمز، عشان ما نعتمد على اللون لحاله
+STATUSES = [
+    {"key": "active", "label": "فعّال", "icon": "✓"},
+    {"key": "due", "label": "عليه مبلغ", "icon": "!"},
+    {"key": "not-started", "label": "ما بدأ", "icon": "◷"},
+    {"key": "expired", "label": "منتهي", "icon": "✕"},
+    {"key": "empty", "label": "ما عليها عقد", "icon": "—"},
+    {"key": "unknown", "label": "تواريخ ناقصة", "icon": "?"},
+]
+STATUS_BY_KEY = {s["key"]: s for s in STATUSES}
+
+# تحويل الأرقام العربية (١٢٣) إلى (123) عشان المطابقة ما تخرب
+ARABIC_DIGITS = str.maketrans('٠١٢٣٤٥٦٧٨٩۰۱۲۳۴۵۶۷۸۹', '0123456789' * 2)
+
+
+def norm(value):
+    """توحيد رقم الشقة أو اسم الحي للمقارنة: أرقام إنجليزية، بدون مسافات، حروف كبيرة"""
+    return ''.join(str(value or '').translate(ARABIC_DIGITS).split()).upper()
+
+
+def to_number(value):
+    try:
+        return float(str(value).translate(ARABIC_DIGITS).replace(',', '').strip()) if value else 0
+    except (ValueError, TypeError):
+        return 0
+
+
+def parse_date(value):
+    try:
+        return datetime.strptime((value or '').strip(), '%Y-%m-%d').date()
+    except (ValueError, AttributeError):
+        return None
+
+
+def days_word(n):
+    if n == 1:
+        return 'يوم واحد'
+    if n == 2:
+        return 'يومين'
+    if 3 <= n <= 10:
+        return f'{n} أيام'
+    return f'{n} يوم'
+
+
+@app.template_filter('dmy')
+def format_dmy(value):
+    d = parse_date(value)
+    return d.strftime('%d/%m/%Y') if d else (value or '—')
+
 
 # إنشاء اتصال بقاعدة البيانات
 def get_db_connection():
@@ -54,9 +153,22 @@ def init_db():
         )
     ''')
     conn.commit()
+    conn.close()
 
 # استدعاء دالة إنشاء قاعدة البيانات عند بدء تشغيل التطبيق
 init_db()
+
+
+def login_required(view):
+    @wraps(view)
+    def wrapper(*args, **kwargs):
+        if not session.get('logged_in'):
+            if request.path == '/delete-contract':
+                return jsonify({'error': 'انتهى تسجيل الدخول، ادخل كلمة المرور من جديد'}), 401
+            return redirect(url_for('login'))
+        return view(*args, **kwargs)
+    return wrapper
+
 
 def prepare_arabic_text(text):
     reshaped_text = arabic_reshaper.reshape(text)
@@ -66,7 +178,7 @@ def prepare_arabic_text(text):
 def get_contract_status(start_date, end_contract):
     sa_timezone = pytz.timezone('Asia/Riyadh')
     today = datetime.now(sa_timezone).date()  # <-- هنا التعديل المهم
-    
+
     try:
         start = datetime.strptime(start_date.strip(), '%Y-%m-%d').date() if start_date else None
     except Exception:
@@ -84,7 +196,7 @@ def get_contract_status(start_date, end_contract):
             return "فعال"
         else:
             return "منتهي"
-    
+
     elif start and not end:
         return "منتهي" if today > start else "لم يبدأ"
 
@@ -92,6 +204,47 @@ def get_contract_status(start_date, end_contract):
         return "فعال" if today <= end else "منتهي"
 
     return "غير معروف"
+
+
+def contract_state(contract):
+    """يرجع حالة العقد (اللون والاسم والرمز) مع كم يوم باقي أو فات"""
+    if contract is None:
+        return dict(STATUS_BY_KEY['empty'], days_text='')
+
+    status = get_contract_status(contract['start_date'], contract['end_contract'])
+    if status == "لم يبدأ":
+        key = 'not-started'
+    elif status == "فعال":
+        key = 'due' if to_number(contract['amount_paid']) < to_number(contract['monthly_rent']) else 'active'
+    elif status == "منتهي":
+        key = 'expired'
+    else:
+        key = 'unknown'
+
+    today = datetime.now(SA_TZ).date()
+    start = parse_date(contract['start_date'])
+    end = parse_date(contract['end_contract'])
+    days_text = ''
+    if key in ('active', 'due') and end:
+        left = (end - today).days
+        days_text = 'ينتهي اليوم' if left == 0 else f'باقي {days_word(left)}'
+    elif key == 'expired' and end:
+        days_text = f'انتهى من {days_word((today - end).days)}'
+    elif key == 'not-started' and start:
+        days_text = f'يبدأ بعد {days_word((start - today).days)}'
+
+    return dict(STATUS_BY_KEY[key], days_text=days_text)
+
+
+def find_contract(conn, apartment_number, neighborhood):
+    """يدور عقد الشقة حتى لو انكتب الرقم بأرقام عربية أو بمسافة زيادة"""
+    apt, hood = norm(apartment_number), norm(neighborhood)
+    if not apt or not hood:
+        return None
+    for row in conn.execute('SELECT * FROM contracts ORDER BY id DESC').fetchall():
+        if norm(row['apartment_number']) == apt and norm(row['jeddah_neighborhood']) == hood:
+            return row
+    return None
 
 
 @app.route('/contract-status')
@@ -113,14 +266,14 @@ def contract_status():
     )
 
     else:
-        return "العقد غير موجود."
+        return render_template('contract_status.html', error="العقد غير موجود.")
 
 def generate_pdf(data):
     pdf = FPDF(unit='mm', format=(914.4, 685.8))
     pdf.add_page()
     pdf.image('static/contract.png', x=0, y=0, w=914.4, h=685.8)
     pdf.add_font('Amiri', '', 'static/Amiri Bold.ttf', uni=True)
-    
+
     # تعيين حجم الخط العادي لبقية البيانات
     pdf.set_font('Amiri', '', 35)
 
@@ -131,10 +284,13 @@ def generate_pdf(data):
     qr = qrcode.QRCode(box_size=20, border=4)
     qr.add_data(qr_data)
     qr.make(fit=True)
-    qr_image_path = "static/qr_temp.png"
-    qr.make_image(fill="black", back_color="white").save(qr_image_path)
+    # صورة الـQR تتحفظ مؤقت برا مجلد static وتتحول رمادي (صورة الأبيض والأسود كانت تطلع مشوهة في الـPDF)
+    fd, qr_image_path = tempfile.mkstemp(suffix='.png')
+    os.close(fd)
+    qr.make_image(fill_color="black", back_color="white").get_image().convert('L').save(qr_image_path)
 
     pdf.image(qr_image_path, x=50, y=530, w=100)
+    os.remove(qr_image_path)
 
     def add_text(x, y, width, height, text, align='C', color=(0, 0, 0)):
         pdf.set_text_color(*color)  # تحديد اللون
@@ -166,7 +322,7 @@ def generate_pdf(data):
     add_text(600, 600, 150, 30, data.get('maintenance-fee', ''))
     add_text(620, 450, 150, 30, data.get('amount-paid', ''))
     add_text(120, 450, 450, 30, data.get('amount-in-words', ''))
-    
+
     # تعيين اللون الأزرق الغامق لتوقيع المالك
     add_text(690, 635, 150, 30, data.get('owner-signature', ''), color=(0, 0, 139))
 
@@ -177,14 +333,26 @@ def generate_pdf(data):
     add_text(450, 385, 350, 30, data.get('duration', ''))
     add_text(450, 420, 350, 30, data.get('total', ''))
 
-    apartment_number = data.get('apartment-number', 'unknown')
-    contract_date = data.get('date', 'unknown')
-    pdf_path = f"static/{apartment_number}_{contract_date}.pdf"
-    pdf.output(pdf_path)
-    return pdf_path
+    apartment_number = (data.get('apartment-number') or 'unknown').strip().replace('/', '-')
+    contract_date = data.get('date') or 'unknown'
+    # العقد ما يتحفظ في static (كان أي أحد يقدر يحمّله من الرابط)، ينبني مؤقت ويتحذف
+    fd, tmp_path = tempfile.mkstemp(suffix='.pdf')
+    os.close(fd)
+    try:
+        pdf.output(tmp_path)
+        with open(tmp_path, 'rb') as f:
+            pdf_bytes = f.read()
+    finally:
+        os.remove(tmp_path)
+    return pdf_bytes, f"{apartment_number}_{contract_date}.pdf"
+
 @app.route('/submit', methods=['POST'])
+@login_required
 def submit():
     data = request.form.to_dict()
+    # المدة كانت تنطبع في العقد بس ما تنحفظ، الحين تنحفظ في عمود الأشهر
+    if not data.get('months'):
+        data['months'] = data.get('duration', '')
     contract_status = get_contract_status(data.get('start-date'), data.get('end-contract'))
     data['contract-status'] = contract_status
 
@@ -195,15 +363,12 @@ def submit():
     cursor = conn.cursor()
 
     # التحقق مما إذا كان هناك عقد موجود لنفس رقم الشقة والحي
-    existing_contract = cursor.execute(
-        'SELECT id, contract_number FROM contracts WHERE apartment_number = ? AND jeddah_neighborhood = ?',
-        (apartment_number, jeddah_neighborhood)
-    ).fetchone()
+    existing_contract = find_contract(conn, apartment_number, jeddah_neighborhood)
 
     if existing_contract:
         # تحديث العقد الحالي بدلاً من إنشاء عقد جديد
         contract_number = existing_contract['contract_number']
-        cursor.execute(''' 
+        cursor.execute('''
             UPDATE contracts
             SET
                 date = ?, nationality = ?, id_number = ?, id_type = ?, job = ?, salary = ?,
@@ -223,7 +388,7 @@ def submit():
         ))
     else:
         # إضافة عقد جديد برقم عقد جديد يتم إنشاؤه تلقائيًا باستخدام AUTOINCREMENT
-        cursor.execute(''' 
+        cursor.execute('''
             INSERT INTO contracts (
                 date, nationality, id_number, id_type, job, salary, marital_status,
                 apartment_number, client_name, start_date, end_contract, contract_status,
@@ -251,57 +416,76 @@ def submit():
     conn.close()
 
     data['contract-number'] = contract_number
-    pdf_path = generate_pdf(data)
-    return send_file(pdf_path, as_attachment=True, download_name=pdf_path.split('/')[-1])
+    pdf_bytes, filename = generate_pdf(data)
+    return send_file(io.BytesIO(pdf_bytes), mimetype='application/pdf', as_attachment=True, download_name=filename)
 
 
 @app.route('/view-database', methods=['GET', 'POST'])
+@login_required
 def view_database():
+    query = (request.form.get('search-query') or '').strip() if request.method == 'POST' else ''
+
     conn = get_db_connection()
-
-    # إذا كان الطلب GET، عرض جميع العقود
-    if request.method == 'GET':
-        contracts = conn.execute('SELECT * FROM contracts').fetchall()
-    else:
-        # إذا كان الطلب POST، قم بمعالجة استعلام البحث
-        search_query = request.form.get('search-query')
-        if search_query:
-            contracts = conn.execute('''
-                SELECT * FROM contracts
-                WHERE client_name LIKE ? 
-                OR apartment_number LIKE ? 
-                OR jeddah_neighborhood LIKE ? 
-                OR contract_status LIKE ?
-            ''', (f'%{search_query}%', f'%{search_query}%', f'%{search_query}%', f'%{search_query}%')).fetchall()
-        else:
-            contracts = conn.execute('SELECT * FROM contracts').fetchall()
-
+    rows = conn.execute('SELECT * FROM contracts ORDER BY id DESC').fetchall()
     conn.close()
-    return render_template('view_database.html', contracts=contracts, get_contract_status=get_contract_status)
+
+    contracts = []
+    q = norm(query)
+    for row in rows:
+        item = dict(row)
+        item['st'] = contract_state(row)
+        if q:
+            haystack = [item.get('client_name'), item.get('apartment_number'), item.get('jeddah_neighborhood'),
+                        item.get('phone'), item.get('contract_number'), item['st']['label']]
+            if not any(q in norm(v) for v in haystack):
+                continue
+        contracts.append(item)
+
+    return render_template('view_database.html', contracts=contracts, query=query, total=len(rows))
 
 @app.route('/')
 def login():
-    return '''
-        <form method="POST" action="/check-password">
-            <label for="password">ادخل كلمة المرور:</label>
-            <input type="password" id="password" name="password">
-            <button type="submit">تسجيل الدخول</button>
-        </form>
-    '''
+    if session.get('logged_in'):
+        return redirect(url_for('apartments'))
+    return render_template('login.html')
 
 @app.route('/check-password', methods=['POST'])
 def check_password():
     password = request.form.get('password')
     if password == PASSWORD:
-        return redirect(url_for('contract_page'))
+        session.permanent = True
+        session['logged_in'] = True
+        return redirect(url_for('apartments'))
     else:
-        return "كلمة المرور غير صحيحة! حاول مرة أخرى."
+        return render_template('login.html', error="كلمة المرور غير صحيحة، جرّب مرة ثانية.")
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
 
 @app.route('/contract-page')
+@login_required
 def contract_page():
-    return render_template('index.html')
+    # لما ينضغط على شقة من صفحة الشقق: يفتح عقدها، وإذا ما لها عقد يجهز عقد جديد لها
+    apartment = (request.args.get('apartment') or '').strip()
+    neighborhood = (request.args.get('neighborhood') or '').strip()
+    contract, notice = None, None
+    prefill = {}
+    if apartment and neighborhood:
+        conn = get_db_connection()
+        row = find_contract(conn, apartment, neighborhood)
+        conn.close()
+        if row:
+            contract = dict(row)
+        else:
+            prefill = {'apartment_number': apartment, 'jeddah_neighborhood': neighborhood}
+            notice = f"ما فيه عقد مسجل لشقة {apartment} في {neighborhood}، عبّ البيانات تحت عشان تسوي عقد جديد."
+    return render_template('index.html', c=contract or prefill, contract=contract,
+                           notice=notice, neighborhoods=NEIGHBORHOODS)
 
 @app.route('/delete-contract', methods=['POST'])
+@login_required
 def delete_contract():
     contract_number = request.form.get('contract-number')
 
@@ -313,7 +497,7 @@ def delete_contract():
 
     # التحقق من وجود العقد
     contract = cursor.execute('SELECT * FROM contracts WHERE contract_number = ?', (contract_number,)).fetchone()
-    
+
     if not contract:
         conn.close()
         return jsonify({'error': 'لم يتم العثور على العقد'}), 404
@@ -327,105 +511,128 @@ def delete_contract():
 
 
 @app.route('/search-contract', methods=['POST'])
+@login_required
 def search_contract():
-    apartment_number = request.form.get('apartment-number')
-    jeddah_neighborhood = request.form.get('jeddah-neighborhood')
+    apartment_number = (request.form.get('apartment-number') or '').strip()
+    jeddah_neighborhood = (request.form.get('jeddah-neighborhood') or '').strip()
 
     # التحقق من الإدخالات
     if not apartment_number or not jeddah_neighborhood:
-        return render_template('index.html', error="يرجى إدخال رقم الشقة والحي للبحث.")
+        return render_template('index.html', c={}, contract=None, neighborhoods=NEIGHBORHOODS,
+                               error="اكتب رقم الشقة واختر الحي عشان نبحث.")
 
-    # البحث عن العقد
+    return redirect(url_for('contract_page', apartment=apartment_number, neighborhood=jeddah_neighborhood))
+
+# أعمدة النسخة الاحتياطية (نفس أسماء أعمدة قاعدة البيانات)
+BACKUP_COLUMNS = [
+    'client_name', 'date', 'contract_number', 'nationality', 'id_number', 'id_type', 'job', 'salary',
+    'marital_status', 'apartment_number', 'start_date', 'end_contract', 'jeddah_neighborhood', 'transfer',
+    'end_date', 'insurance_paid', 'rent_fee', 'maintenance_fee', 'owner_signature', 'phone', 'monthly_rent',
+    'months', 'total', 'amount_paid', 'amount_in_words',
+]
+
+
+@app.route('/export')
+@login_required
+def export_contracts():
+    """تحميل كل العقود كملف CSV يفتح في Excel"""
     conn = get_db_connection()
-    contract = conn.execute('''
-        SELECT * FROM contracts
-        WHERE apartment_number = ? AND jeddah_neighborhood = ?
-    ''', (apartment_number, jeddah_neighborhood)).fetchone()
+    rows = conn.execute('SELECT * FROM contracts ORDER BY id').fetchall()
     conn.close()
+    out = io.StringIO()
+    writer = csv.writer(out)
+    writer.writerow(BACKUP_COLUMNS)
+    for row in rows:
+        writer.writerow([row[c] if row[c] is not None else '' for c in BACKUP_COLUMNS])
+    data = ('﻿' + out.getvalue()).encode('utf-8')
+    filename = f"afif-contracts-backup-{datetime.now(SA_TZ).strftime('%Y-%m-%d')}.csv"
+    return send_file(io.BytesIO(data), mimetype='text/csv', as_attachment=True, download_name=filename)
 
-    # التحقق من نتيجة البحث
-    if contract:
-        return render_template('index.html', contract=contract)
-    else:
-        return render_template('index.html', error="لم يتم العثور على عقد مطابق.")
-    
+
+@app.route('/import', methods=['GET', 'POST'])
+@login_required
+def import_contracts():
+    """استرجاع العقود من ملف النسخة الاحتياطية. العقد اللي رقمه موجود ما يتكرر."""
+    if request.method == 'GET':
+        return render_template('import.html')
+
+    file = request.files.get('file')
+    if not file or not file.filename:
+        return render_template('import.html', error='اختر ملف النسخة الاحتياطية (CSV) أول.')
+    try:
+        text = file.read().decode('utf-8-sig')
+    except UnicodeDecodeError:
+        return render_template('import.html', error='الملف مو بصيغة CSV مقروءة (UTF-8).')
+
+    reader = csv.DictReader(io.StringIO(text))
+    missing = [c for c in ('contract_number', 'apartment_number', 'jeddah_neighborhood') if c not in (reader.fieldnames or [])]
+    if missing:
+        return render_template('import.html', error='الملف ناقص أعمدة: ' + '، '.join(missing))
+
+    imported, skipped = 0, 0
+    conn = get_db_connection()
+    existing_numbers = {r['contract_number'] for r in conn.execute('SELECT contract_number FROM contracts')}
+    existing_ids = {r['id'] for r in conn.execute('SELECT id FROM contracts')}
+    for raw in reader:
+        row = {c: (raw.get(c) or '').strip() for c in BACKUP_COLUMNS}
+        row = {c: ('' if v == 'None' else v) for c, v in row.items()}
+        number = row['contract_number']
+        if number and number in existing_numbers:
+            skipped += 1
+            continue
+        row['contract_status'] = get_contract_status(row['start_date'], row['end_contract'])
+        cols = list(row.keys())
+        values = [row[c] for c in cols]
+        # نحافظ على رقم العقد كـ id عشان العقود الجديدة تكمل الترقيم بعد آخر رقم
+        if number.isdigit() and int(number) not in existing_ids:
+            cols.insert(0, 'id')
+            values.insert(0, int(number))
+            existing_ids.add(int(number))
+        cur = conn.execute(f"INSERT INTO contracts ({', '.join(cols)}) VALUES ({', '.join('?' * len(cols))})", values)
+        if not number:
+            number = str(cur.lastrowid).zfill(4)
+            conn.execute('UPDATE contracts SET contract_number = ? WHERE id = ?', (number, cur.lastrowid))
+        existing_numbers.add(number)
+        imported += 1
+    conn.commit()
+    total = conn.execute('SELECT COUNT(*) FROM contracts').fetchone()[0]
+    conn.close()
+    return render_template('import.html', done=True, imported=imported, skipped=skipped, total=total)
+
+
 @app.route('/apartments')
+@login_required
 def apartments():
-    # أرقام شقق العمارتين
-    al_rawabi_apartments = [
-        "101", "102", "103", "104", "105", "106", "107", "108", "109", "110",
-        "111", "112", "113", "114", "201", "202A", "202B", "202C", "203", "204", "205", "206",
-        "207", "208", "209", "210A", "210B", "210C", "211", "212", "213", "214",
-        "301", "302", "303", "304", "305", "306", "307", "308", "309", "310",
-        "311", "312", "313", "314", "401A", "401B", "401C", "403", "404", "405", "406",
-        "407", "408", "409", "410", "411A", "411B", "411C", "412A", "412B", "412C", "413", "414", "415", 
-        "416", "417", "418", "501A", "501C", "52B", "53A", "53B", "53C", "54A", "54B",
-        "54C", "55B", "511A", "511B", "511C", "57A", "57B", "57C", "58A", "58B", "58C",
-        "601", "602", "603", "604", "605", "606", "607", "608", "609", "610", "611", "612",
-        "613", "614", "615", "616", "617", "618",
-        "Shop", "2", "3", "4", "5", "6"
-    ]
-
-    bin_malik_4_apartments = [
-        "1", "2", "3", "4", "5", "6", "7", "8F", "9F", 
-        "10F", "11", "12", "13", "14", "15", "16", "17",
-        "21", "22", "23", "24", "25", "26", "27",
-        "31", "32", "33", "34", "35", "36",
-        "41", "42", "43", "44", "45", "46",
-        "51", "52", "53", "54", "55", "56",
-        "61", "62", "63", "64", 
-        "102", "104", "106", "108", "110", "112",
-        "202", "204", "206", "208", "210", "212", "213", "214",
-    ]
-
-    # جلب بيانات العقود من قاعدة البيانات
+    # جلب بيانات العقود من قاعدة البيانات (الأحدث أول)
     conn = get_db_connection()
-    cursor = conn.cursor()
-    contracts = cursor.execute("SELECT apartment_number, start_date, end_contract, contract_status, jeddah_neighborhood, amount_paid, monthly_rent FROM contracts").fetchall()
+    contracts = conn.execute("SELECT * FROM contracts ORDER BY id DESC").fetchall()
     conn.close()
 
-    # تصنيف الشقق حسب العمارة
-    al_rawabi_status = {apt: {"status": "غير متاح", "end_contract": "غير مسجل"} for apt in al_rawabi_apartments}
-    bin_malik_4_status = {apt: {"status": "غير متاح", "end_contract": "غير مسجل"} for apt in bin_malik_4_apartments}
-
+    # أحدث عقد لكل شقة، والمطابقة تتحمل الأرقام العربية والمسافات
+    latest = {}
     for contract in contracts:
-        apt_number = contract["apartment_number"]
-        status = get_contract_status(contract["start_date"], contract["end_contract"])
-        end_contract = contract["end_contract"] if contract["end_contract"] else "غير مسجل"
-        neighborhood = contract["jeddah_neighborhood"].strip() if contract["jeddah_neighborhood"] else ""
+        key = (norm(contract["jeddah_neighborhood"]), norm(contract["apartment_number"]))
+        latest.setdefault(key, contract)
 
-        try:
-            amount_paid = float(contract["amount_paid"]) if contract["amount_paid"] else 0
-        except (ValueError, TypeError):
-            amount_paid = 0
+    buildings = []
+    for b in BUILDINGS:
+        units = []
+        counts = {s["key"]: 0 for s in STATUSES}
+        for apt in b["apartments"]:
+            contract = latest.get((norm(b["neighborhood"]), norm(apt)))
+            st = contract_state(contract)
+            counts[st["key"]] += 1
+            units.append({
+                "number": apt,
+                "display": "محل" if apt == "Shop" else apt,
+                "st": st,
+                "end_contract": contract["end_contract"] if contract else None,
+                "client_name": contract["client_name"] if contract else None,
+            })
+        buildings.append(dict(b, units=units, counts=counts))
 
-        try:
-            monthly_rent = float(contract["monthly_rent"]) if contract["monthly_rent"] else 0
-        except (ValueError, TypeError):
-            monthly_rent = 0
-
-        due = amount_paid < monthly_rent
-        not_started = status == "لم يبدأ" 
-
-        if apt_number in al_rawabi_apartments and neighborhood == "الروابي":
-            al_rawabi_status[apt_number] = {
-                "status": status,
-                "end_contract": end_contract,
-                "due": due,
-                "not_started": not_started 
-            }
-
-        elif apt_number in bin_malik_4_apartments and neighborhood == "بني مالك 4":
-            bin_malik_4_status[apt_number] = {
-                "status": status,
-                "end_contract": end_contract,
-                "due": due,
-                "not_started": not_started 
-            }
-
-
-    return render_template("apartments.html", al_rawabi=al_rawabi_status, bin_malik_4=bin_malik_4_status)
+    return render_template("apartments.html", buildings=buildings, statuses=STATUSES)
 
 
 if __name__ == '__main__':
-    app.run(debug=True) 
+    app.run(debug=True)
