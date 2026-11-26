@@ -2,6 +2,14 @@
 {% block title %}الشقق - أملاك عبدالقادر عفيف{% endblock %}
 
 {% block content %}
+<a class="btn btn-accent report-btn" href="{{ url_for('monthly_report') }}">
+    ⬇ تحميل التقرير الشهري (PDF)
+</a>
+{% if unmatched %}
+<p class="warn-note">فيه {{ unmatched|length }} عقد رقم شقته مو موجود في القائمة، فما يطلع على المربعات:
+    {% for c in unmatched %}<a href="{{ url_for('contract_page', apartment=c.apartment_number, neighborhood=c.jeddah_neighborhood) }}">{{ c.apartment_number }} ({{ c.jeddah_neighborhood }})</a>{% if not loop.last %}، {% endif %}{% endfor %}
+</p>
+{% endif %}
 <div class="building-tabs">
     {% for b in buildings %}
     <button type="button" data-target="b-{{ b.key }}" class="{% if loop.first %}on{% endif %}">

@@ -660,10 +660,12 @@ def import_contracts():
     return render_template('import.html', done=True, imported=imported, skipped=skipped, total=total)
 
 
-@app.route('/apartments')
-@login_required
-def apartments():
-    # جلب بيانات العقود من قاعدة البيانات (الأحدث أول)
+SHORT_LABELS = {'active': 'فعّال', 'due': 'عليه مبلغ', 'not-started': 'ما بدأ', 'expired': 'منتهي',
+                'empty': 'بدون عقد', 'unknown': 'ناقص'}
+
+
+def collect_buildings():
+    """أحدث عقد لكل شقة في كل عمارة، مع العقود اللي رقم شقتها مو موجود في القوائم"""
     conn = get_db_connection()
     contracts = conn.execute("SELECT * FROM contracts ORDER BY id DESC").fetchall()
     conn.close()
@@ -674,24 +676,98 @@ def apartments():
         key = (norm(contract["jeddah_neighborhood"]), norm(contract["apartment_number"]))
         latest.setdefault(key, contract)
 
-    buildings = []
+    buildings, used = [], set()
     for b in BUILDINGS:
         units = []
         counts = {s["key"]: 0 for s in STATUSES}
         for apt in b["apartments"]:
-            contract = latest.get((norm(b["neighborhood"]), norm(apt)))
+            key = (norm(b["neighborhood"]), norm(apt))
+            used.add(key)
+            contract = latest.get(key)
             st = contract_state(contract)
             counts[st["key"]] += 1
             units.append({
                 "number": apt,
                 "display": "محل" if apt == "Shop" else apt,
                 "st": st,
+                "contract": contract,
                 "end_contract": contract["end_contract"] if contract else None,
                 "client_name": contract["client_name"] if contract else None,
             })
         buildings.append(dict(b, units=units, counts=counts))
+    unmatched = [c for key, c in latest.items() if key not in used]
+    return buildings, unmatched
 
-    return render_template("apartments.html", buildings=buildings, statuses=STATUSES)
+
+@app.route('/apartments')
+@login_required
+def apartments():
+    buildings, unmatched = collect_buildings()
+    return render_template("apartments.html", buildings=buildings, statuses=STATUSES, unmatched=unmatched)
+
+
+def report_data():
+    """أرقام وجداول التقرير الشهري"""
+    buildings, unmatched = collect_buildings()
+    today = datetime.now(SA_TZ).date()
+    all_units, grids = [], []
+    for b in buildings:
+        units = []
+        for u in b["units"]:
+            c = u["contract"]
+            rent = to_number(c["monthly_rent"]) if c else 0
+            paid = to_number(c["amount_paid"]) if c else 0
+            end = parse_date(c["end_contract"]) if c else None
+            row = {
+                "key": u["st"]["key"], "label": u["st"]["label"], "short": SHORT_LABELS[u["st"]["key"]],
+                "days_text": u["st"]["days_text"], "display": u["display"], "building": b["name"],
+                "client_name": c["client_name"] if c else "", "phone": c["phone"] if c else "",
+                "start_dmy": format_dmy(c["start_date"]) if c else "", "end_dmy": format_dmy(c["end_contract"]) if c else "",
+                "end": end, "rent": rent, "paid": paid, "remaining": max(rent - paid, 0),
+            }
+            units.append(row)
+            all_units.append(row)
+        grids.append({"name": b["name"], "units": units, "counts": b["counts"]})
+
+    current = [u for u in all_units if u["key"] in ("active", "due")]
+    total_units = len(all_units)
+    totals = {
+        "units": total_units,
+        "rented": len(current),
+        "occupancy": round(len(current) * 100 / total_units) if total_units else 0,
+        "rent": sum(u["rent"] for u in current),
+        "paid": sum(min(u["paid"], u["rent"]) if u["rent"] else u["paid"] for u in current),
+        "remaining": sum(u["remaining"] for u in current),
+        "due_count": sum(1 for u in current if u["key"] == "due"),
+    }
+    ending_soon = sorted((u for u in current if u["end"] and 0 <= (u["end"] - today).days <= 7), key=lambda u: u["end"])
+    unmatched_rows = []
+    for c in unmatched:
+        st = contract_state(c)
+        unmatched_rows.append({
+            "apartment_number": c["apartment_number"], "jeddah_neighborhood": c["jeddah_neighborhood"],
+            "client_name": c["client_name"], "phone": c["phone"], "end_dmy": format_dmy(c["end_contract"]),
+            "state_label": st["label"],
+        })
+    return {
+        "today": today,
+        "labels": dict({s["key"]: s["label"] for s in STATUSES}, empty=SHORT_LABELS["empty"]),
+        "buildings": grids,
+        "totals": totals,
+        "expired": [u for u in all_units if u["key"] == "expired"],
+        "due": [u for u in all_units if u["key"] == "due"],
+        "ending_soon": ending_soon,
+        "unmatched": unmatched_rows,
+        "rented_rows": [u for u in all_units if u["key"] in ("active", "due", "not-started")],
+    }
+
+
+@app.route('/monthly-report')
+@login_required
+def monthly_report():
+    from report import build_monthly_report
+    pdf_bytes, filename = build_monthly_report(report_data(), os.path.join(app.root_path, 'static'))
+    return send_file(io.BytesIO(pdf_bytes), mimetype='application/pdf', as_attachment=True, download_name=filename)
 
 
 if __name__ == '__main__':
