@@ -287,6 +287,18 @@ def find_contract(conn, apartment_number, neighborhood):
     return None
 
 
+# بعض الأجهزة تطلب الأيقونة من هالمسارات مباشرة
+@app.route('/apple-touch-icon.png')
+@app.route('/apple-touch-icon-precomposed.png')
+def apple_touch_icon():
+    return app.send_static_file('apple-touch-icon.png')
+
+
+@app.route('/favicon.ico')
+def favicon():
+    return app.send_static_file('favicon-32.png')
+
+
 @app.route('/contract-status')
 def contract_status():
     contract_number = request.args.get('contract_number')
